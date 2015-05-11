@@ -87,7 +87,8 @@ class AmberMixtureSystem(object):
     def build_boxes(self):
         """Build an initial box with packmol and use it to generate AMBER files."""
         if not os.path.exists(self.box_pdb_filename):
-            packed_trj = openmoltools.packmol.pack_box([md.load(mol2) for mol2 in self.gaff_mol2_filenames], self.n_monomers)
+            size = openmoltools.packmol.approximate_volume_by_density( self._smiles_strings, self.n_monomers )
+            packed_trj = openmoltools.packmol.pack_box([md.load(mol2) for mol2 in self.gaff_mol2_filenames], self.n_monomers, box_size = size)
             packed_trj.save(self.box_pdb_filename)
 
         if not (os.path.exists(self.inpcrd_filename) and os.path.exists(self.prmtop_filename)):
