@@ -41,8 +41,11 @@ class AmberMixtureSystem(object):
         self.monomer_pdb_filenames = [DATA_PATH + "monomers/" + string + ".pdb" for string in self.cas_strings]
         self.box_pdb_filename = DATA_PATH + "packmol_boxes/" + self.identifier + ".pdb"
         
+        #input_crd_filename and prmtop_filename stores the AMBER filenames of the solvated molecules
         self.inpcrd_filename = DATA_PATH + "tleap/" + self.identifier + ".inpcrd"
         self.prmtop_filename = DATA_PATH + "tleap/" + self.identifier + ".prmtop"
+        
+        #Gromacs topology files 
         self.top_filename = DATA_PATH + "gromacs/" + self.identifier + ".top"
         self.gro_filename = DATA_PATH + "gromacs/" + self.identifier + ".gro"
         
@@ -50,6 +53,7 @@ class AmberMixtureSystem(object):
         self.gaff_mol2_filenames = [DATA_PATH + "monomers/" + string + ".mol2" for string in self.cas_strings]
         self.frcmod_filenames = [DATA_PATH + "monomers/" + string + ".frcmod" for string in self.cas_strings]
         
+        #input_crd_filenames and prmtop_filenames stores the AMBER filenames of the molecules without solvation
         self.inpcrd_filenames = [DATA_PATH + "tleap/" + string + ".inpcrd" for string in self.cas_strings]
         self.prmtop_filenames = [DATA_PATH + "tleap/" + string + ".prmtop" for string in self.cas_strings]
         
