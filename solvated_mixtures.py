@@ -41,14 +41,21 @@ class AmberMixtureSystem(object):
         self.monomer_pdb_filenames = [DATA_PATH + "monomers/" + string + ".pdb" for string in self.cas_strings]
         self.box_pdb_filename = DATA_PATH + "packmol_boxes/" + self.identifier + ".pdb"
         
+        #input_crd_filename and prmtop_filename stores the AMBER filenames of the solvated molecules
         self.inpcrd_filename = DATA_PATH + "tleap/" + self.identifier + ".inpcrd"
         self.prmtop_filename = DATA_PATH + "tleap/" + self.identifier + ".prmtop"
+        
+        #Gromacs topology files 
         self.top_filename = DATA_PATH + "gromacs/" + self.identifier + ".top"
         self.gro_filename = DATA_PATH + "gromacs/" + self.identifier + ".gro"
         
         
         self.gaff_mol2_filenames = [DATA_PATH + "monomers/" + string + ".mol2" for string in self.cas_strings]
         self.frcmod_filenames = [DATA_PATH + "monomers/" + string + ".frcmod" for string in self.cas_strings]
+        
+        #input_crd_filenames and prmtop_filenames stores the AMBER filenames of the molecules without solvation
+        self.inpcrd_filenames = [DATA_PATH + "tleap/" + string + ".inpcrd" for string in self.cas_strings]
+        self.prmtop_filenames = [DATA_PATH + "tleap/" + string + ".prmtop" for string in self.cas_strings]
         
         make_path(DATA_PATH + 'monomers/')
         make_path(DATA_PATH + 'packmol_boxes/')
@@ -76,9 +83,12 @@ class AmberMixtureSystem(object):
         for k, smiles_string in enumerate(self.smiles_strings):
             mol2_filename = self.gaff_mol2_filenames[k]
             frcmod_filename = self.frcmod_filenames[k]
+            inpcrd_filename = self.inpcrd_filenames[k]
+            prmtop_filename = self.prmtop_filenames[k]
             if not (os.path.exists(mol2_filename) and os.path.exists(frcmod_filename)):
                 #Convert SMILES strings to mol2 and frcmod files for antechamber
                 openmoltools.openeye.smiles_to_antechamber(smiles_string, mol2_filename, frcmod_filename)
+                openmoltools.amber.build_prmtop(mol2_filename,frcmod_filename, prmtop_filename, inpcrd_filename)
 
         #Generate unique residue names for molecules in mol2 files
         openmoltools.utils.randomize_mol2_residue_names( self.gaff_mol2_filenames )
