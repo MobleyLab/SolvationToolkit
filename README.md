@@ -10,11 +10,11 @@ At this point its usage is limited to non-water solutes/solvents, but other than
 
 ## Prerequisites
 * Auto-installable:
-  * openmoltools (but needs latest version so install from source)
-  * mdtraj
+  * openmoltools v0.6.5 or later
+  * mdtraj (via omnia channel on conda)
   * OpenEye tools
+  * packmol (via omnia channel on conda)
 * Must be installed manually
-  * packmol (from source)
   * ParmEd (from source)
 
 ## Issues
