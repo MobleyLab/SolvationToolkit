@@ -88,6 +88,7 @@ class AmberMixtureSystem(object):
             if not (os.path.exists(mol2_filename) and os.path.exists(frcmod_filename)):
                 #Convert SMILES strings to mol2 and frcmod files for antechamber
                 openmoltools.openeye.smiles_to_antechamber(smiles_string, mol2_filename, frcmod_filename)
+                #Generate amber coordinate and topology files for the unsolvated molecules
                 openmoltools.utils.run_tleap('molecule', mol2_filename,frcmod_filename, prmtop_filename, inpcrd_filename)
 
         #Generate unique residue names for molecules in mol2 files
