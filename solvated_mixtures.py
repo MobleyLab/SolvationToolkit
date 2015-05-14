@@ -45,7 +45,7 @@ class AmberMixtureSystem(object):
         self.inpcrd_filename = DATA_PATH + "tleap/" + self.identifier + ".inpcrd"
         self.prmtop_filename = DATA_PATH + "tleap/" + self.identifier + ".prmtop"
         
-        #Gromacs topology files 
+        #top_filename and gro_filename stores the GROMACS filename of the solvated molecules
         self.top_filename = DATA_PATH + "gromacs/" + self.identifier + ".top"
         self.gro_filename = DATA_PATH + "gromacs/" + self.identifier + ".gro"
         
@@ -57,6 +57,11 @@ class AmberMixtureSystem(object):
         self.inpcrd_filenames = [DATA_PATH + "tleap/" + string + ".inpcrd" for string in self.cas_strings]
         self.prmtop_filenames = [DATA_PATH + "tleap/" + string + ".prmtop" for string in self.cas_strings]
         
+        #top_filenames and gro_filenames stores the GROMACS filenames of the molecules without solvation
+        self.gro_filenames = [DATA_PATH + "gromacs/" + string + ".gro" for string in self.cas_strings]
+        self.top_filenames = [DATA_PATH + "gromacs/" + string + ".top" for string in self.cas_strings]
+        
+
         make_path(DATA_PATH + 'monomers/')
         make_path(DATA_PATH + 'packmol_boxes/')
         make_path(DATA_PATH + 'tleap/')
@@ -85,11 +90,16 @@ class AmberMixtureSystem(object):
             frcmod_filename = self.frcmod_filenames[k]
             inpcrd_filename = self.inpcrd_filenames[k]
             prmtop_filename = self.prmtop_filenames[k]
+            gro_filename = self.gro_filenames[k]
+            top_filename = self.top_filenames[k]
             if not (os.path.exists(mol2_filename) and os.path.exists(frcmod_filename)):
                 #Convert SMILES strings to mol2 and frcmod files for antechamber
                 openmoltools.openeye.smiles_to_antechamber(smiles_string, mol2_filename, frcmod_filename)
                 #Generate amber coordinate and topology files for the unsolvated molecules
-                openmoltools.utils.run_tleap('molecule', mol2_filename,frcmod_filename, prmtop_filename, inpcrd_filename)
+                mol_name = os.path.basename(gro_filename).split('.')[0]
+                openmoltools.utils.run_tleap(mol_name, mol2_filename,frcmod_filename, prmtop_filename, inpcrd_filename)
+				#Generate gromacs coordinate and topology coordinate files for the unsovated system
+                openmoltools.utils.convert_via_acpype(mol_name, prmtop_filename, inpcrd_filename, top_filename, gro_filename)
 
         #Generate unique residue names for molecules in mol2 files
         openmoltools.utils.randomize_mol2_residue_names( self.gaff_mol2_filenames )
