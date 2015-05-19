@@ -23,8 +23,10 @@ class MixtureSystem(object):
     
     Parameters
     ----------
-    cas_strings : list(str)
-        CAS strings for each component of the mixture
+    labels: list(str)
+        Labels or names for components of the system; full name will be constructed from the labels of the components plus the number of each component. 
+    smiles_strings : list(str)
+        SMILES strings (isomeric if chiral) for the components of the system
     n_monomers: list(int)
         Number of each type of molecule
     data_path : str
@@ -34,20 +36,28 @@ class MixtureSystem(object):
         will be treated as a solute in constructing GROMACS topology files 
         (which means that a single molecule of this component will be singled out as the 'solute'
         in the resulting GROMACS topology file). Valid options are 'auto' (pick the first component present with n_monomers = 1,
-        otherwise the first component), None (don't pick any), or an integer (pick the component cas_strings[solute_index].
+        otherwise the first component), None (don't pick any), or an integer (pick the component smiles_strings[solute_index].
+
+    Notes
+    -----
+    Monomer components of the system will be stored with filenames 'labelN' where N is the component number, i.e. 0, 1, ... len(smiles_strings).
     """
 
-    def __init__(self, cas_strings, n_monomers, DATA_PATH, solute_index = 'auto' ):
+    def __init__(self, labels, smiles_strings, n_monomers, DATA_PATH, solute_index = 'auto' ):
 
-        self.cas_strings = cas_strings
+        self.smiles_strings = smiles_strings
         self.n_monomers = n_monomers
         self.solute_index = solute_index
-        
+        self.n_components = len( smiles_strings )
+        self.labels = labels
 
-        identifier = list(itertools.chain(cas_strings, [str(n) for n in n_monomers]) )
-        self.identifier = '_'.join(identifier)        
+        assert len(smiles_strings) == len(n_monomers), "Number of provided smiles strings must equal the number of each type of molecule provided." 
+        assert len(smiles_strings) == len(labels), "Number of provided smiles strings must equal the number of labels provided." 
+
+        identifier = list(itertools.chain(self.labels, [str(n) for n in n_monomers]) )
+        self.identifier = '_'.join(identifier)  
         
-        self.monomer_pdb_filenames = [DATA_PATH + "monomers/" + string + ".pdb" for string in self.cas_strings]
+        self.monomer_pdb_filenames = [DATA_PATH + "monomers/" + string + ".pdb" for string in self.labels]
         self.box_pdb_filename = DATA_PATH + "packmol_boxes/" + self.identifier + ".pdb"
         
         #input_crd_filename and prmtop_filename stores the AMBER filenames of the solvated molecules
@@ -59,30 +69,21 @@ class MixtureSystem(object):
         self.gro_filename = DATA_PATH + "gromacs/" + self.identifier + ".gro"
         
         
-        self.gaff_mol2_filenames = [DATA_PATH + "monomers/" + string + ".mol2" for string in self.cas_strings]
-        self.frcmod_filenames = [DATA_PATH + "monomers/" + string + ".frcmod" for string in self.cas_strings]
+        self.gaff_mol2_filenames = [DATA_PATH + "monomers/" + string + ".mol2" for string in self.labels]
+        self.frcmod_filenames = [DATA_PATH + "monomers/" + string + ".frcmod" for string in self.labels]
         
         #input_crd_filenames and prmtop_filenames stores the AMBER filenames of the molecules without solvation
-        self.inpcrd_filenames = [DATA_PATH + "tleap/" + string + ".inpcrd" for string in self.cas_strings]
-        self.prmtop_filenames = [DATA_PATH + "tleap/" + string + ".prmtop" for string in self.cas_strings]
+        self.inpcrd_filenames = [DATA_PATH + "tleap/" + string + ".inpcrd" for string in self.labels]
+        self.prmtop_filenames = [DATA_PATH + "tleap/" + string + ".prmtop" for string in self.labels]
         
         #top_filenames and gro_filenames stores the GROMACS filenames of the molecules without solvation
-        self.gro_filenames = [DATA_PATH + "gromacs/" + string + ".gro" for string in self.cas_strings]
-        self.top_filenames = [DATA_PATH + "gromacs/" + string + ".top" for string in self.cas_strings]
+        self.gro_filenames = [DATA_PATH + "gromacs/" + string + ".gro" for string in self.labels]
+        self.top_filenames = [DATA_PATH + "gromacs/" + string + ".top" for string in self.labels]
 
         make_path(DATA_PATH + 'monomers/')
         make_path(DATA_PATH + 'packmol_boxes/')
         make_path(DATA_PATH + 'tleap/')
         make_path(DATA_PATH + 'gromacs/') 
-
-    @property
-
-    def smiles_strings(self):
-        self._smiles_strings = []
-        for mlc in self.cas_strings:
-            self._smiles_strings.append(openmoltools.cirpy.resolve(mlc, 'smiles'))
-        
-        return self._smiles_strings
 
     def run(self, just_build=False):
         """Build mol2 monomers, packmol boxes, inpcrd files, equilibrate, and run production."""
@@ -116,7 +117,7 @@ class MixtureSystem(object):
     def build_boxes(self):
         """Build an initial box with packmol and use it to generate AMBER files."""
         if not os.path.exists(self.box_pdb_filename):
-            size = openmoltools.packmol.approximate_volume_by_density( self._smiles_strings, self.n_monomers )
+            size = openmoltools.packmol.approximate_volume_by_density( self.smiles_strings, self.n_monomers )
             packed_trj = openmoltools.packmol.pack_box([md.load(mol2) for mol2 in self.gaff_mol2_filenames], self.n_monomers, box_size = size)
             packed_trj.save(self.box_pdb_filename)
 
@@ -168,11 +169,11 @@ class MixtureSystem(object):
                 self.n_monomers[self.solute_index] = self.n_monomers[self.solute_index]-1
                 self.n_monomers = [self.n_monomers[0]] + [1] + [self.n_monomers[1]]
                 #Construct names - solute will be specified as such
-                names = [self.cas_strings[0]] + ['solute'] + [self.cas_strings[1]]
+                names = [self.labels[0]] + ['solute'] + [self.labels[1]]
             #Otherwise we're just changing the name of one of the components and leaving everything else as is   
             else:
                 #Only change names
-                names = copy.copy( self.cas_strings )
+                names = copy.copy( self.labels )
                 names[ self.solute_index ] = 'solute'
                  
             #Now merge
