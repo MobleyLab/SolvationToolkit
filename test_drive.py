@@ -13,7 +13,8 @@ solvents = ['cyclohexane', 'cyclohexane', 'cyclohexane', 'octanol', 'octanol', '
 #Generate SMILES strings for these, as they're used by the mixture class
 def get_smiles(name):
     mol = OEMol()
-    OEParseIUPACName( mol, name)
+    if not OEParseIUPACName( mol, name):
+        raise ValueError("Error: The supplied name '%s' could not be parsed." % name )
     return OECreateIsoSmiString( mol )
 
 solute_smiles = [ get_smiles(name) for name in solutes ]
