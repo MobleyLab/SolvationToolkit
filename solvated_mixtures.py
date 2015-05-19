@@ -36,7 +36,7 @@ class MixtureSystem(object):
         will be treated as a solute in constructing GROMACS topology files 
         (which means that a single molecule of this component will be singled out as the 'solute'
         in the resulting GROMACS topology file). Valid options are 'auto' (pick the first component present with n_monomers = 1,
-        otherwise the first component), None (don't pick any), or an integer (pick the component cas_strings[solute_index].
+        otherwise the first component), None (don't pick any), or an integer (pick the component smiles_strings[solute_index].
 
     Notes
     -----
@@ -173,7 +173,7 @@ class MixtureSystem(object):
             #Otherwise we're just changing the name of one of the components and leaving everything else as is   
             else:
                 #Only change names
-                names = copy.copy( self.cas_strings )
+                names = copy.copy( self.labels )
                 names[ self.solute_index ] = 'solute'
                  
             #Now merge
