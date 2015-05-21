@@ -159,17 +159,21 @@ class MixtureSystem(object):
         
         else:
             #Handle case where a particular molecule is specified as the solute 
-            assert self.solute_index == 0 or self.solute_index == 1 and isinstance(self.solute_index, int), "Solute index must be zero or one. The value passed is: %s" % self.solute_index
+            
+            #Check that the passed solute index is correct
+            check_solute_indices = range(0,len(self.n_monomers))
+            assert self.solute_index in check_solute_indices and isinstance(self.solute_index, int), "Solute index must be an element of the list: %s. The value passed is: %s" % (check_solute_indices,self.solute_index) 
+            
             #If monomer_present is True (if one was already a monomer) then we preserve the same number of components; 
             #otherwise we are increasing the number of components in the topology by one by splitting off a monomer
             if not monomer_present:
                 #Increase the number of components and construct new input topologies list (we are making one topology be included twice under two different names)
-                self.top_filenames = [self.top_filenames[0]] + [self.top_filenames[self.solute_index]] + [self.top_filenames[1]]
+                self.top_filenames = self.top_filenames[0:self.solute_index] + [self.top_filenames[self.solute_index]] + self.top_filenames[self.solute_index:]
                 #Change number of components accordingly
                 self.n_monomers[self.solute_index] = self.n_monomers[self.solute_index]-1
-                self.n_monomers = [self.n_monomers[0]] + [1] + [self.n_monomers[1]]
+                self.n_monomers = self.n_monomers[0:self.solute_index] + [1] + self.n_monomers[self.solute_index:] 
                 #Construct names - solute will be specified as such
-                names = [self.labels[0]] + ['solute'] + [self.labels[1]]
+                names = self.cas_strings[0:self.solute_index] + ['solute'] + self.cas_strings[self.solute_index:]
             #Otherwise we're just changing the name of one of the components and leaving everything else as is   
             else:
                 #Only change names
