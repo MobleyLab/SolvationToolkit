@@ -41,6 +41,10 @@ class MixtureSystem(object):
     Notes
     -----
     Monomer components of the system will be stored with filenames 'labelN' where N is the component number, i.e. 0, 1, ... len(smiles_strings).
+
+    Limitations
+    -----------
+    Existing files with the same name present in the data directory tree may be overwritten. This results in a limitation/failure in a small (and probably random) fraction of cases if multiple systems involving the same monomers are written into the same data directory. Specifically, openmoltools.amber.build_mixture_prmtop requires that each mol2 file for a component have a unique residue name, which is handled automatically by openmoltools when constructing monomers (each is assigned a unique random residue name). However, if these are overwritten with other monomers (i.e. if we set up, say, 'octanol' in the same directory twice) which by chance end up with non-unique residue names then amber.build_mixture_prmtop will fail with a ValueError. This can be avoided by ensuring that if you are constructing multiple MixtureSystems involving the same monomers, your data directories are different. This issue also will likely be fixed when openmoltools switches to topology merging via ParmEd rather than tleap, as unique residue names are built into ParmEd in a better way. 
     """
 
     def __init__(self, labels, smiles_strings, n_monomers, DATA_PATH, solute_index = 'auto' ):
@@ -173,7 +177,7 @@ class MixtureSystem(object):
                 self.n_monomers[self.solute_index] = self.n_monomers[self.solute_index]-1
                 self.n_monomers = self.n_monomers[0:self.solute_index] + [1] + self.n_monomers[self.solute_index:] 
                 #Construct names - solute will be specified as such
-                names = self.cas_strings[0:self.solute_index] + ['solute'] + self.cas_strings[self.solute_index:]
+                names = self.labels[0:self.solute_index] + ['solute'] + self.labels[self.solute_index:]
             #Otherwise we're just changing the name of one of the components and leaving everything else as is   
             else:
                 #Only change names
