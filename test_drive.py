@@ -23,13 +23,9 @@ solvent_smiles = [ get_smiles(name) for name in solvents ]
 #Number of solute/solvent molecules
 Nsolu = 3
 Nsolv = 100
-Ntest1 = 4
-Ntest2 = 5
 
 #Construct systems
 for idx in range( len( solutes) ):
-    #Construct system name/label
-    builder = MixtureSystem( [solutes[idx], solvents[idx]], [ solute_smiles[idx], solvent_smiles[idx]], [ Nsolu, Nsolv], 'data/')  
+    builder = MixtureSystem( [ solutes[idx], solvents[idx]], [solute_smiles[idx], solvent_smiles[idx] ], [ Nsolu, Nsolv], 'data/', solute_index=0)  
     builder.run( just_build = True )
     builder.convert_to_gromacs()
-
