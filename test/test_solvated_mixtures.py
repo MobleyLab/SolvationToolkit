@@ -56,6 +56,12 @@ class TestMixtureSystem(unittest.TestCase):
             self.inst.inpcrd_filename = 'inpcrd_filename' 
             self.inst.prmtop_filename = 'prmtop_filename'
             self.assertRaises(IOError,self.inst.build_boxes)
+    #Test run
+    def test_run(self):
+        with utils.enter_temp_directory():
+            self.inst = MixtureSystem(['toluene','benzene','cyclohexane','ethane'],['Cc1ccccc1','c1ccccc1','C1CCCCC1','CC'],[3,5,80,7],'test/data/',solute_index=2)
+            self.inst.run( just_build = True )
+            self.inst.convert_to_gromacs()
 if __name__ =='__main__':
     unittest.main()
     
