@@ -35,18 +35,19 @@ class TestMixtureSystem(unittest.TestCase):
             self.inst = MixtureSystem(['toluene','benzene','cyclohexane','ethane'],['Cc1ccccc1','c1ccccc1','C1CCCCC1','CC'],[3,5,80,7],'/', solute_index=2)
             self.assertRaises(AttributeError,self.inst.convert_to_gromacs)
             #Check merge_topologies by using wrong filenames (solute_index=None case)
-            self.inst = MixtureSystem(['toluene','benzene','cyclohexane','ethane'],['Cc1ccccc1','c1ccccc1','C1CCCCC1','CC'],[3,5,80,7],'test/data/', solute_index=None)
-            self.inst.top_filenames = ['test/data/Error_filenames']
-            self.inst.top_filename = 'test/data/Error_filename'
-            self.assertRaises(AssertionError,self.inst.convert_to_gromacs)
-            #Check solute_index is in the correct range
-            self.inst = MixtureSystem(['toluene','benzene','cyclohexane','ethane'],['Cc1ccccc1','c1ccccc1','C1CCCCC1','CC'],[3,5,80,7],'test/data/', solute_index=6)
-            self.assertRaises(AssertionError,self.inst.convert_to_gromacs)
-            #Check merge_topologies by using wrong filenames (solute_index='auto' case)
-            self.inst = MixtureSystem(['toluene','benzene','cyclohexane','ethane'],['Cc1ccccc1','c1ccccc1','C1CCCCC1','CC'],[3,1,80,7],'test/data/', solute_index='auto')
-            self.inst.top_filenames = ['test/data/Error_filenames']
-            self.inst.top_filename = 'test/data/Error_filename'
-            self.assertRaises(AssertionError,self.inst.convert_to_gromacs)
+            with utils.enter_temp_directory():
+                self.inst = MixtureSystem(['toluene','benzene','cyclohexane','ethane'],['Cc1ccccc1','c1ccccc1','C1CCCCC1','CC'],[3,5,80,7],'test/data/', solute_index=None)
+                self.inst.top_filenames = ['test/data/Error_filenames']
+                self.inst.top_filename = 'test/data/Error_filename'
+                self.assertRaises(AttributeError,self.inst.convert_to_gromacs)
+                #Check solute_index is in the correct range
+                self.inst = MixtureSystem(['toluene','benzene','cyclohexane','ethane'],['Cc1ccccc1','c1ccccc1','C1CCCCC1','CC'],[3,5,80,7],'test/data/', solute_index=6)
+                self.assertRaises(AttributeError,self.inst.convert_to_gromacs)
+                #Check merge_topologies by using wrong filenames (solute_index='auto' case)
+                self.inst = MixtureSystem(['toluene','benzene','cyclohexane','ethane'],['Cc1ccccc1','c1ccccc1','C1CCCCC1','CC'],[3,1,80,7],'test/data/', solute_index='auto')
+                self.inst.top_filenames = ['test/data/Error_filenames']
+                self.inst.top_filename = 'test/data/Error_filename'
+                self.assertRaises(AttributeError,self.inst.convert_to_gromacs)
     def test_build_boxes(self):
         #Check IO Errors
         with utils.enter_temp_directory():
@@ -56,7 +57,7 @@ class TestMixtureSystem(unittest.TestCase):
             self.inst.inpcrd_filename = 'inpcrd_filename' 
             self.inst.prmtop_filename = 'prmtop_filename'
             self.assertRaises(IOError,self.inst.build_boxes)
-    #Test run
+    #Test Run
     def test_run(self):
         with utils.enter_temp_directory():
             self.inst = MixtureSystem(['toluene','benzene','cyclohexane','ethane'],['Cc1ccccc1','c1ccccc1','C1CCCCC1','CC'],[3,5,80,7],'test/data/',solute_index=2)
