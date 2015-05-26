@@ -3,7 +3,8 @@
 #Revised 4/30/15 by David Mobley to test automation of setting up our own solution-phase simulations.
 
 import numpy as np
-import os
+import os,sys
+import inspect
 import itertools
 import mdtraj as md
 import copy
@@ -46,9 +47,26 @@ class MixtureSystem(object):
     -----------
     Existing files with the same name present in the data directory tree may be overwritten. This results in a limitation/failure in a small (and probably random) fraction of cases if multiple systems involving the same monomers are written into the same data directory. Specifically, openmoltools.amber.build_mixture_prmtop requires that each mol2 file for a component have a unique residue name, which is handled automatically by openmoltools when constructing monomers (each is assigned a unique random residue name). However, if these are overwritten with other monomers (i.e. if we set up, say, 'octanol' in the same directory twice) which by chance end up with non-unique residue names then amber.build_mixture_prmtop will fail with a ValueError. This can be avoided by ensuring that if you are constructing multiple MixtureSystems involving the same monomers, your data directories are different. This issue also will likely be fixed when openmoltools switches to topology merging via ParmEd rather than tleap, as unique residue names are built into ParmEd in a better way. 
     """
-
     def __init__(self, labels, smiles_strings, n_monomers, DATA_PATH, solute_index = 'auto' ):
-
+        #check numbers of passed arguments 
+        num_args = len(inspect.getargspec(MixtureSystem.__init__).args)
+        assert num_args >= 5 , "The number of passed values must be at least 5, given %d" % num_args
+        
+        #check the types of passed arguments
+        check_type_error = False
+        if not all(isinstance(i,str) for i in labels):
+            check_type_error = True
+        if not all(isinstance(i,str) for i in smiles_strings):
+            check_type_error = True
+        if not all(isinstance(i,int) for i in n_monomers):
+            check_type_error = True
+        if not isinstance(DATA_PATH, str):
+            check_type_error =True
+        if not (isinstance(solute_index,str) or isinstance(solute_index,int) or isinstance(solute_index,type(None))):
+            check_type_error = True
+        if check_type_error :
+            raise TypeError('One or more passed types are wrong')
+            
         self.smiles_strings = smiles_strings
         self.n_monomers = n_monomers
         self.solute_index = solute_index
@@ -109,12 +127,13 @@ class MixtureSystem(object):
             if not (os.path.exists(mol2_filename) and os.path.exists(frcmod_filename)):
                 #Convert SMILES strings to mol2 and frcmod files for antechamber
                 openmoltools.openeye.smiles_to_antechamber(smiles_string, mol2_filename, frcmod_filename)
-                #Generate amber coordinate and topology files for the unsolvated molecules
-                mol_name = os.path.basename(gro_filename).split('.')[0]
-                openmoltools.utils.run_tleap(mol_name, mol2_filename,frcmod_filename, prmtop_filename, inpcrd_filename)
-                #Generate gromacs coordinate and topology coordinate files for the unsovated molecules
-                openmoltools.utils.convert_via_acpype(mol_name, prmtop_filename, inpcrd_filename, top_filename, gro_filename)
-                
+
+            #Generate amber coordinate and topology files for the unsolvated molecules
+            mol_name = os.path.basename(gro_filename).split('.')[0]
+            openmoltools.amber.run_tleap(mol_name, mol2_filename,frcmod_filename, prmtop_filename, inpcrd_filename)
+            #Generate gromacs coordinate and topology coordinate files for the unsovated molecules
+            openmoltools.utils.convert_via_acpype(mol_name, prmtop_filename, inpcrd_filename, top_filename, gro_filename)
+
         #Generate unique residue names for molecules in mol2 files
         openmoltools.utils.randomize_mol2_residue_names( self.gaff_mol2_filenames )
         
@@ -143,8 +162,8 @@ class MixtureSystem(object):
         and generating a combined GROMACS topology file consisting of the appropriate number of monomers."""
 
         #Generate solvated topology and coordinate file for the full system via acpype
-        #The topology file created here will be overwritten below since we don't need it     
-        openmoltools.utils.convert_via_acpype( self.identifier, self.prmtop_filename, self.inpcrd_filename, self.top_filename, self.gro_filename ) 
+        #The topology file created here will be overwritten below since we don't need it
+        openmoltools.utils.convert_via_acpype( self.identifier, self.prmtop_filename, self.inpcrd_filename, self.top_filename, self.gro_filename )
 
         #Figure out what we're treating as the solute (if anything)
         monomer_present = False
@@ -166,11 +185,12 @@ class MixtureSystem(object):
             
             #Check that the passed solute index is correct
             check_solute_indices = range(0,len(self.n_monomers))
-            assert self.solute_index in check_solute_indices and isinstance(self.solute_index, int), "Solute index must be an element of the list: %s. The value passed is: %s" % (check_solute_indices,self.solute_index) 
+            assert self.solute_index in check_solute_indices and isinstance(self.solute_index, int), "Solute index must be an element of the list: %s. The value passed is: %s" % (check_solute_indices,self.solute_index)
             
             #If monomer_present is True (if one was already a monomer) then we preserve the same number of components; 
             #otherwise we are increasing the number of components in the topology by one by splitting off a monomer
             if not monomer_present:
+                
                 #Increase the number of components and construct new input topologies list (we are making one topology be included twice under two different names)
                 self.top_filenames = self.top_filenames[0:self.solute_index] + [self.top_filenames[self.solute_index]] + self.top_filenames[self.solute_index:]
                 #Change number of components accordingly
@@ -178,12 +198,12 @@ class MixtureSystem(object):
                 self.n_monomers = self.n_monomers[0:self.solute_index] + [1] + self.n_monomers[self.solute_index:] 
                 #Construct names - solute will be specified as such
                 names = self.labels[0:self.solute_index] + ['solute'] + self.labels[self.solute_index:]
-            #Otherwise we're just changing the name of one of the components and leaving everything else as is   
+
+            #Otherwise we're just changing the name of one of the components and leaving everything else as is
             else:
                 #Only change names
                 names = copy.copy( self.labels )
                 names[ self.solute_index ] = 'solute'
                  
             #Now merge
-            openmoltools.gromacs.merge_topologies(self.top_filenames, self.top_filename, 'mixture', molecule_names = names, molecule_numbers = self.n_monomers ) 
-                     
+            openmoltools.gromacs.merge_topologies(self.top_filenames, self.top_filename, 'mixture', molecule_names = names, molecule_numbers = self.n_monomers )
