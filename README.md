@@ -1,6 +1,10 @@
 # SolvationToolkit
 In-house tools for setting up arbitrary (currently non-water) solute-solvent mixtures for simulation in GROMACS
 
+##Build Status
+
+[![Build Status](https://travis-ci.org/nividic/SolvationToolkit.svg?branch=master)](https://travis-ci.org/nividic/SolvationToolkit)
+
 ## Current status
 
 At this point what's here consists primarily of `solvated_mixtures.py` which sets up a class structure to use openmoltools (and related utilities) to automatically set up simulations of mixtures of solvents/solutes, and `test_drive.py` which gives an example driver script using this to set up simulations of several mixtures. 

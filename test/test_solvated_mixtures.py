@@ -1,8 +1,24 @@
 import os.path, sys
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
 from solvated_mixtures import MixtureSystem
-import unittest
 from openmoltools import utils
+import unittest
+from unittest import skipIf
+
+
+try:
+    oechem = utils.import_("openeye.oechem")
+    if not oechem.OEChemIsLicensed(): raise(ImportError("Need License for OEChem!"))
+    oequacpac = utils.import_("openeye.oequacpac")
+    if not oequacpac.OEQuacPacIsLicensed(): raise(ImportError("Need License for oequacpac!"))
+    oeiupac = utils.import_("openeye.oeiupac")
+    if not oeiupac.OEIUPACIsLicensed(): raise(ImportError("Need License for OEOmega!"))        
+    oeomega = utils.import_("openeye.oeomega")
+    if not oeomega.OEOmegaIsLicensed(): raise(ImportError("Need License for OEOmega!"))    
+    HAVE_OE = True
+except:
+    HAVE_OE = False
+
 
 class TestMixtureSystem(unittest.TestCase):
     def setUp(self):
@@ -22,6 +38,7 @@ class TestMixtureSystem(unittest.TestCase):
             self.assertRaises(AssertionError,self.inst.__init__,['toluene','benzene'],['Cc1ccccc1','c1ccccc1','C1CCCCC1','CC'],[3,5,80,7],'test/data/', solute_index=2)
             self.assertRaises(TypeError,self.inst.__init__,['toluene','benzene'],['Cc1ccccc1','c1ccccc1'],[3,5],-3.9, solute_index=0)
     #Test class methods
+    @skipIf(not HAVE_OE, "Cannot test openeye module without OpenEye tools.")
     def test_build_monomers(self):
         with utils.enter_temp_directory():
             #Check smile strings
@@ -48,6 +65,7 @@ class TestMixtureSystem(unittest.TestCase):
                 self.inst.top_filenames = ['test/data/Error_filenames']
                 self.inst.top_filename = 'test/data/Error_filename'
                 self.assertRaises(AttributeError,self.inst.convert_to_gromacs)
+    @skipIf(not HAVE_OE, "Cannot test openeye module without OpenEye tools.")            
     def test_build_boxes(self):
         #Check IO Errors
         with utils.enter_temp_directory():
@@ -58,6 +76,7 @@ class TestMixtureSystem(unittest.TestCase):
             self.inst.prmtop_filename = 'prmtop_filename'
             self.assertRaises(IOError,self.inst.build_boxes)
     #Test Run
+    @skipIf(not HAVE_OE, "Cannot test openeye module without OpenEye tools.")
     def test_run(self):
         with utils.enter_temp_directory():
             self.inst = MixtureSystem(['toluene','benzene','cyclohexane','ethane'],['Cc1ccccc1','c1ccccc1','C1CCCCC1','CC'],[3,5,80,7],'test/data/',solute_index=2)
