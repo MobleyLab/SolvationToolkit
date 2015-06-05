@@ -1,0 +1,17 @@
+language: python
+
+branches:
+  only:
+    - master
+
+install:
+  - source devtools/ci/install.sh
+
+env:
+  matrix:
+    - PYTHON_VERSION=2.7
+
+script:
+  - echo "Testing Stage...."
+  - cd test
+  - nosetests .
