@@ -10,6 +10,7 @@ solutes = ['phenol', 'toluene', 'benzene']
 #Solvent names
 solvents = ['cyclohexane', 'cyclohexane', 'cyclohexane']
 
+
 #Generate SMILES strings for these, as they're used by the mixture class
 def get_smiles(name):
     mol = OEMol()
