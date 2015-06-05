@@ -14,4 +14,4 @@ env:
 script:
   - echo "Testing Stage...."
   - cd test
-  - nosetests -vs .
+  - nosetests .
