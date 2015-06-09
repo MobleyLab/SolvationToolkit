@@ -24,6 +24,6 @@ git clone https://github.com/ParmEd/ParmEd.git
 cd ParmEd && python setup.py install
 cd ..
 
-conda create -y -n myenv python=$PYTHON_VERSION openmoltools packmol numpy scipy netcdf4 pandas nose openmm
+conda create -y -n myenv python=$PYTHON_VERSION openmoltools packmol numpy scipy netcdf4 pandas nose openmm pytables
 
 source activate myenv
