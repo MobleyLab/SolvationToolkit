@@ -26,8 +26,7 @@ import os,sys
 import inspect
 import itertools
 import mdtraj as md
-import copy
-
+import parmed
 import openmoltools
 
 def make_path(filename):
@@ -206,7 +205,7 @@ class MixtureSystem(object):
                 resnames.append( [ self.names[i] ] * self.n_monomers[i] )
             #If it is the solute, make the first residue be named solute and the rest what they were already
             else: 
-                resnames.append( [ self.names[i]] + [ self.names[i]] * (self.n_monomers[i]-1) ] )
+                resnames.append( [ self.names[i]] + [ self.names[i]] * (self.n_monomers[i]-1)  )
         #Make sure we didn't botch this
         assert len(resnames) == len( gromacs_topology.residues ), "Must have the same number of residues named as defined in the topology file."
 
