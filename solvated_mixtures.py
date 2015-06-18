@@ -116,10 +116,6 @@ class MixtureSystem(object):
         self.inpcrd_filenames = [DATA_PATH + "tleap/" + string + ".inpcrd" for string in self.labels]
         self.prmtop_filenames = [DATA_PATH + "tleap/" + string + ".prmtop" for string in self.labels]
         
-        #top_filenames and gro_filenames stores the GROMACS filenames of the molecules without solvation
-        self.gro_filenames = [DATA_PATH + "gromacs/" + string + ".gro" for string in self.labels]
-        self.top_filenames = [DATA_PATH + "gromacs/" + string + ".top" for string in self.labels]
-
         make_path(DATA_PATH + 'monomers/')
         make_path(DATA_PATH + 'packmol_boxes/')
         make_path(DATA_PATH + 'tleap/')
@@ -140,8 +136,6 @@ class MixtureSystem(object):
             frcmod_filename = self.frcmod_filenames[k]
             inpcrd_filename = self.inpcrd_filenames[k]
             prmtop_filename = self.prmtop_filenames[k]
-            gro_filename = self.gro_filenames[k]
-            top_filename = self.top_filenames[k]
             if not (os.path.exists(mol2_filename) and os.path.exists(frcmod_filename)):
                 #Convert SMILES strings to mol2 and frcmod files for antechamber
                 openmoltools.openeye.smiles_to_antechamber(smiles_string, mol2_filename, frcmod_filename)
@@ -149,8 +143,6 @@ class MixtureSystem(object):
             #Generate amber coordinate and topology files for the unsolvated molecules
             mol_name = os.path.basename(gro_filename).split('.')[0]
             openmoltools.amber.run_tleap(mol_name, mol2_filename,frcmod_filename, prmtop_filename, inpcrd_filename)
-            #Generate gromacs coordinate and topology coordinate files for the unsovated molecules
-            openmoltools.utils.convert_via_acpype(mol_name, prmtop_filename, inpcrd_filename, top_filename, gro_filename)
 
         #Generate unique residue names for molecules in mol2 files
         openmoltools.utils.randomize_mol2_residue_names( self.gaff_mol2_filenames )
