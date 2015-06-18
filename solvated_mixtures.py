@@ -209,6 +209,7 @@ class MixtureSystem(object):
 
 
         #Write GROMACS topology/coordinate files
-        gromacs_topology.write( self.top_filename, self.gro_filename )
+        gromacs_topology.write( self.top_filename )
+        parmed.gromacs.GromacsGroFile.write( gromacs_topology, self.gro_filename )
 
 
