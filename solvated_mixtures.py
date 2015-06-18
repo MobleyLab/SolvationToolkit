@@ -199,13 +199,14 @@ class MixtureSystem(object):
         #Now all we have to do is to change the name of the solute molecule (residue, in ParmEd) and ParmEd will automatically make it a new molecule on write.
         #To do this, first build a list of the residue names we want, by molecule
         resnames = [ ]
-        for i in range(self.n_monomers):
+        for i in range(len(self.n_monomers)):
             #If this is not the solute, just keep what we had
             if i!=self.solute_index:
-                resnames.append( [ self.names[i] ] * self.n_monomers[i] )
+                resnames += [ self.labels[i] ] * self.n_monomers[i] 
             #If it is the solute, make the first residue be named solute and the rest what they were already
             else: 
-                resnames.append( [ self.names[i]] + [ self.names[i]] * (self.n_monomers[i]-1)  )
+                resnames += [ 'solute' ] + [ self.labels[i]] * (self.n_monomers[i]-1)  
+
         #Make sure we didn't botch this
         assert len(resnames) == len( gromacs_topology.residues ), "Must have the same number of residues named as defined in the topology file."
 
