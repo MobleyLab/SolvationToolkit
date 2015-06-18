@@ -179,78 +179,44 @@ class MixtureSystem(object):
         #Generate GROMACS topology and coordinates
         gromacs_topology = parmed.gromacs.GromacsTopologyFile.from_structure( structure )
         
-        #Generate solvated topology and coordinate file for the full system via acpype
-        #The topology file created here will be overwritten below since we don't need it
-        #openmoltools.utils.amber_to_gromacs( self.identifier, self.prmtop_filename, self.inpcrd_filename, self.top_filename, self.gro_filename )
+
+        #Split the topology into components and check that we have the right number of components
+        components = gromacs_topology.split()
+        assert len(components)==len(self.n_monomers), "Number of monomers and number of components in the combined topology do not match." 
 
         #Figure out what we're treating as the solute (if anything)
-        monomer_present = False
         if self.solute_index=='auto':
             #Check which of the molecules is present in qty 1
             try:
                 self.solute_index = self.n_monomers.index(1)
-                monomer_present = True
             except ValueError:
                 #If none is present in qty 1, then use the first 
                 self.solute_index = 0
             
-        #If we aren't treating anything as the solute, the current topology file is adequate and we'll just rename the components to what we want them named
-        if self.solute_index == None:
-            names = copy.copy( self.labels )
- 
-        else:
-            #Handle case where a particular molecule is specified as the solute 
+        #Check that the passed solute index is correct
+        check_solute_indices = range(0,len(self.n_monomers))
+        assert self.solute_index in check_solute_indices and isinstance(self.solute_index, int), "Solute index must be an element of the list: %s. The value passed is: %s" % (check_solute_indices,self.solute_index)
             
-            #Check that the passed solute index is correct
-            check_solute_indices = range(0,len(self.n_monomers))
-            assert self.solute_index in check_solute_indices and isinstance(self.solute_index, int), "Solute index must be an element of the list: %s. The value passed is: %s" % (check_solute_indices,self.solute_index)
-            
-            #Split the topology into components and check that we have the right number of components
-            components = gromacs_topology.split()
-            assert len(components)==len(self.n_monomers), "Number of monomers and number of components in the combined topology do not match." 
-
-            #If monomer_present is True (if one was already a monomer) then we preserve the same number of components; 
-            #otherwise we are increasing the number of components in the topology by one by splitting off a monomer
-            if not monomer_present:
-               
-                #Increase the number of components and construct new input topologies list (we are making one topology be included twice under two different names)
-                #Change number of components accordingly
-                self.n_monomers[self.solute_index] = self.n_monomers[self.solute_index]-1
-                self.n_monomers = self.n_monomers[0:self.solute_index] + [1] + self.n_monomers[self.solute_index:] 
-                #Construct names - solute will be specified as such
-                names = self.labels[0:self.solute_index] + ['solute'] + self.labels[self.solute_index:]
-                
-                #Get list of old topologies
-                tops = [ component[0] for component in components ]
-                
-                #Build list of new topologies
-                tops_new = tops[0:self.solute_index] + [ tops[self.solute_index] ] + tops[self.solute_index:] 
-
-                #Construct final composite topology by combining these
-                final = tops_new[0] * self.n_monomers[0]
-                for i in range(1, len(self.n_monomers)):
-                     final += tops_new[i] * self.n_monomers[i]
-
-                #Copy back coordinates
-                final.positions = gromacs_topology.positions
-
-                #Store 
-                gromacs_topology = final
-
-            #Otherwise we're just changing the name of one of the components and leaving everything else as is
-            else:
-                #Only change names
-                names = copy.copy( self.labels )
-                names[ self.solute_index ] = 'solute'
-                 
-        #Rename components
-        #Build list of final residue names
+        #Now all we have to do is to change the name of the solute molecule (residue, in ParmEd) and ParmEd will automatically make it a new molecule on write.
+        #To do this, first build a list of the residue names we want, by molecule
         resnames = [ ]
         for i in range(self.n_monomers):
-            resnames.append( [ self.names[i] ] * self.n_monomers[i] )
+            #If this is not the solute, just keep what we had
+            if i!=self.solute_index:
+                resnames.append( [ self.names[i] ] * self.n_monomers[i] )
+            #If it is the solute, make the first residue be named solute and the rest what they were already
+            else: 
+                resnames.append( [ self.names[i]] + [ self.names[i]] * (self.n_monomers[i]-1) ] )
+        #Make sure we didn't botch this
+        assert len(resnames) == len( gromacs_topology.residues ), "Must have the same number of residues named as defined in the topology file."
+
+
+        #Now we just go through and rename all the residues and we're done
         for i in range(len(resnames)):
             gromacs_topology.residues[i].name = resnames[i] 
 
 
         #Write GROMACS topology/coordinate files
         gromacs_topology.write( self.top_filename, self.gro_filename )
+
+
