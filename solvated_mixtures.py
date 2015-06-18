@@ -141,7 +141,7 @@ class MixtureSystem(object):
                 openmoltools.openeye.smiles_to_antechamber(smiles_string, mol2_filename, frcmod_filename)
 
             #Generate amber coordinate and topology files for the unsolvated molecules
-            mol_name = os.path.basename(gro_filename).split('.')[0]
+            mol_name = os.path.basename(mol2_filename).split('.')[0]
             openmoltools.amber.run_tleap(mol_name, mol2_filename,frcmod_filename, prmtop_filename, inpcrd_filename)
 
         #Generate unique residue names for molecules in mol2 files
