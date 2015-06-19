@@ -48,23 +48,23 @@ class TestMixtureSystem(unittest.TestCase):
             self.inst = MixtureSystem(['toluene','benzene','cyclohexane','ethane'],['Cc1ccccc1','c1ccccc1','C1CCCCC1','CC'],[3,5,80,7],'/', solute_index=2)
             self.assertRaises(IOError,self.inst.build_monomers)
     def test_convert_to_gromacs(self):
-            #Check convert_via_acpype by using a wrong directory
+            #Check coversion by using a wrong directory
             self.inst = MixtureSystem(['toluene','benzene','cyclohexane','ethane'],['Cc1ccccc1','c1ccccc1','C1CCCCC1','CC'],[3,5,80,7],'/', solute_index=2)
-            self.assertRaises(AttributeError,self.inst.convert_to_gromacs)
+            self.assertRaises(IOError,self.inst.convert_to_gromacs)
             #Check merge_topologies by using wrong filenames (solute_index=None case)
             with utils.enter_temp_directory():
-                self.inst = MixtureSystem(['toluene','benzene','cyclohexane','ethane'],['Cc1ccccc1','c1ccccc1','C1CCCCC1','CC'],[3,5,80,7],'test/data/', solute_index=None)
-                self.inst.top_filenames = ['test/data/Error_filenames']
-                self.inst.top_filename = 'test/data/Error_filename'
-                self.assertRaises(AttributeError,self.inst.convert_to_gromacs)
-                #Check solute_index is in the correct range
-                self.inst = MixtureSystem(['toluene','benzene','cyclohexane','ethane'],['Cc1ccccc1','c1ccccc1','C1CCCCC1','CC'],[3,5,80,7],'test/data/', solute_index=6)
-                self.assertRaises(AttributeError,self.inst.convert_to_gromacs)
-                #Check merge_topologies by using wrong filenames (solute_index='auto' case)
-                self.inst = MixtureSystem(['toluene','benzene','cyclohexane','ethane'],['Cc1ccccc1','c1ccccc1','C1CCCCC1','CC'],[3,1,80,7],'test/data/', solute_index='auto')
-                self.inst.top_filenames = ['test/data/Error_filenames']
-                self.inst.top_filename = 'test/data/Error_filename'
-                self.assertRaises(AttributeError,self.inst.convert_to_gromacs)
+               self.inst = MixtureSystem(['toluene','benzene','cyclohexane','ethane'],['Cc1ccccc1','c1ccccc1','C1CCCCC1','CC'],[3,5,80,7],'test/data/', solute_index=None)
+               self.inst.top_filenames = ['test/data/Error_filenames']
+               self.inst.top_filename = 'test/data/Error_filename'
+               self.assertRaises(IOError,self.inst.convert_to_gromacs)
+               #Check solute_index is in the correct range
+               self.inst = MixtureSystem(['toluene','benzene','cyclohexane','ethane'],['Cc1ccccc1','c1ccccc1','C1CCCCC1','CC'],[3,5,80,7],'test/data/', solute_index=6)
+               self.assertRaises(IOError,self.inst.convert_to_gromacs)
+               #Check merge_topologies by using wrong filenames (solute_index='auto' case)
+               self.inst = MixtureSystem(['toluene','benzene','cyclohexane','ethane'],['Cc1ccccc1','c1ccccc1','C1CCCCC1','CC'],[3,1,80,7],'test/data/', solute_index='auto')
+               self.inst.top_filenames = ['test/data/Error_filenames']
+               self.inst.top_filename = 'test/data/Error_filename'
+               self.assertRaises(IOError,self.inst.convert_to_gromacs)
     @skipIf(not HAVE_OE, "Cannot test openeye module without OpenEye tools.")            
     def test_build_boxes(self):
         #Check IO Errors

@@ -26,8 +26,7 @@ import os,sys
 import inspect
 import itertools
 import mdtraj as md
-import copy
-
+import parmed
 import openmoltools
 
 def make_path(filename):
@@ -117,10 +116,6 @@ class MixtureSystem(object):
         self.inpcrd_filenames = [DATA_PATH + "tleap/" + string + ".inpcrd" for string in self.labels]
         self.prmtop_filenames = [DATA_PATH + "tleap/" + string + ".prmtop" for string in self.labels]
         
-        #top_filenames and gro_filenames stores the GROMACS filenames of the molecules without solvation
-        self.gro_filenames = [DATA_PATH + "gromacs/" + string + ".gro" for string in self.labels]
-        self.top_filenames = [DATA_PATH + "gromacs/" + string + ".top" for string in self.labels]
-
         make_path(DATA_PATH + 'monomers/')
         make_path(DATA_PATH + 'packmol_boxes/')
         make_path(DATA_PATH + 'tleap/')
@@ -141,17 +136,13 @@ class MixtureSystem(object):
             frcmod_filename = self.frcmod_filenames[k]
             inpcrd_filename = self.inpcrd_filenames[k]
             prmtop_filename = self.prmtop_filenames[k]
-            gro_filename = self.gro_filenames[k]
-            top_filename = self.top_filenames[k]
             if not (os.path.exists(mol2_filename) and os.path.exists(frcmod_filename)):
                 #Convert SMILES strings to mol2 and frcmod files for antechamber
                 openmoltools.openeye.smiles_to_antechamber(smiles_string, mol2_filename, frcmod_filename)
 
             #Generate amber coordinate and topology files for the unsolvated molecules
-            mol_name = os.path.basename(gro_filename).split('.')[0]
+            mol_name = os.path.basename(mol2_filename).split('.')[0]
             openmoltools.amber.run_tleap(mol_name, mol2_filename,frcmod_filename, prmtop_filename, inpcrd_filename)
-            #Generate gromacs coordinate and topology coordinate files for the unsovated molecules
-            openmoltools.utils.convert_via_acpype(mol_name, prmtop_filename, inpcrd_filename, top_filename, gro_filename)
 
         #Generate unique residue names for molecules in mol2 files
         openmoltools.utils.randomize_mol2_residue_names( self.gaff_mol2_filenames )
@@ -167,62 +158,58 @@ class MixtureSystem(object):
             tleap_cmd = openmoltools.amber.build_mixture_prmtop(self.gaff_mol2_filenames, self.frcmod_filenames, self.box_pdb_filename, self.prmtop_filename, self.inpcrd_filename)
 
     def convert_to_gromacs(self):
-        """From AMBER-format prmtop and crd files, generate final solvated GROMACS topology and coordinate files.
+        """From AMBER-format prmtop and crd files, generate final solvated GROMACS topology and coordinate files. Ensure that 
 
         Notes
         -----
         
-        Algorithmic notes:
-        ------------------
-        Separate pathways are used for the coordinate and topology files. 
-        Particularly, SOLVATED AMBER prmtop and crd files (created by way of packmol) are 
-        converted to generate the solvated GROMACS .gro file. The topology 
-        file is created by taking the un-solvated components of the system in GROMACS format 
-        and generating a combined GROMACS topology file consisting of the appropriate number of monomers."""
+        """
 
-        #Generate solvated topology and coordinate file for the full system via acpype
-        #The topology file created here will be overwritten below since we don't need it
-        openmoltools.utils.convert_via_acpype( self.identifier, self.prmtop_filename, self.inpcrd_filename, self.top_filename, self.gro_filename )
+        #Read in AMBER format parameter/coordinate file to ParmEd object
+        structure = parmed.amber.AmberParm( self.prmtop_filename, self.inpcrd_filename )
+        #Generate GROMACS topology and coordinates
+        gromacs_topology = parmed.gromacs.GromacsTopologyFile.from_structure( structure )
+        
+
+        #Split the topology into components and check that we have the right number of components
+        components = gromacs_topology.split()
+        assert len(components)==len(self.n_monomers), "Number of monomers and number of components in the combined topology do not match." 
 
         #Figure out what we're treating as the solute (if anything)
-        monomer_present = False
         if self.solute_index=='auto':
             #Check which of the molecules is present in qty 1
             try:
                 self.solute_index = self.n_monomers.index(1)
-                monomer_present = True
             except ValueError:
                 #If none is present in qty 1, then use the first 
                 self.solute_index = 0
             
-        #If we aren't treating anything as the solute, construct a combined topology file
-        if self.solute_index == None:
-            openmoltools.gromacs.merge_topologies( self.top_filenames, self.top_filename, 'mixture', molecule_numbers = self.n_monomers )
-        
-        else:
-            #Handle case where a particular molecule is specified as the solute 
+        #Check that the passed solute index is correct
+        check_solute_indices = range(0,len(self.n_monomers))
+        assert self.solute_index in check_solute_indices and isinstance(self.solute_index, int), "Solute index must be an element of the list: %s. The value passed is: %s" % (check_solute_indices,self.solute_index)
             
-            #Check that the passed solute index is correct
-            check_solute_indices = range(0,len(self.n_monomers))
-            assert self.solute_index in check_solute_indices and isinstance(self.solute_index, int), "Solute index must be an element of the list: %s. The value passed is: %s" % (check_solute_indices,self.solute_index)
-            
-            #If monomer_present is True (if one was already a monomer) then we preserve the same number of components; 
-            #otherwise we are increasing the number of components in the topology by one by splitting off a monomer
-            if not monomer_present:
-                
-                #Increase the number of components and construct new input topologies list (we are making one topology be included twice under two different names)
-                self.top_filenames = self.top_filenames[0:self.solute_index] + [self.top_filenames[self.solute_index]] + self.top_filenames[self.solute_index:]
-                #Change number of components accordingly
-                self.n_monomers[self.solute_index] = self.n_monomers[self.solute_index]-1
-                self.n_monomers = self.n_monomers[0:self.solute_index] + [1] + self.n_monomers[self.solute_index:] 
-                #Construct names - solute will be specified as such
-                names = self.labels[0:self.solute_index] + ['solute'] + self.labels[self.solute_index:]
+        #Now all we have to do is to change the name of the solute molecule (residue, in ParmEd) and ParmEd will automatically make it a new molecule on write.
+        #To do this, first build a list of the residue names we want, by molecule
+        resnames = [ ]
+        for i in range(len(self.n_monomers)):
+            #If this is not the solute, just keep what we had
+            if i!=self.solute_index:
+                resnames += [ self.labels[i] ] * self.n_monomers[i] 
+            #If it is the solute, make the first residue be named solute and the rest what they were already
+            else: 
+                resnames += [ 'solute' ] + [ self.labels[i]] * (self.n_monomers[i]-1)  
 
-            #Otherwise we're just changing the name of one of the components and leaving everything else as is
-            else:
-                #Only change names
-                names = copy.copy( self.labels )
-                names[ self.solute_index ] = 'solute'
-                 
-            #Now merge
-            openmoltools.gromacs.merge_topologies(self.top_filenames, self.top_filename, 'mixture', molecule_names = names, molecule_numbers = self.n_monomers )
+        #Make sure we didn't botch this
+        assert len(resnames) == len( gromacs_topology.residues ), "Must have the same number of residues named as defined in the topology file."
+
+
+        #Now we just go through and rename all the residues and we're done
+        for i in range(len(resnames)):
+            gromacs_topology.residues[i].name = resnames[i] 
+
+
+        #Write GROMACS topology/coordinate files
+        gromacs_topology.write( self.top_filename )
+        parmed.gromacs.GromacsGroFile.write( gromacs_topology, self.gro_filename )
+
+
