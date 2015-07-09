@@ -238,26 +238,16 @@ class MixtureSystem(object):
 
         #Read in the mol2 filename
         try:
-            file = open(mol2_input_filename,'r')
-            text = file.readlines()
-            file.close()
+            struct = parmed.load_file(mol2_input_filename)
         except:
-            raise IOError('The input file %s is missing' % mol2_input_filename)
+            raise IOError('The input filename %s is missing' % mol2_input_filename)
         
-        #Select the mol2 ATOM section
-        index = 0
-        for x in text:
-            if x == '@<TRIPOS>ATOM\n':
-                start_idx_charge = index + 1
-            if x == '@<TRIPOS>BOND\n':
-                end_idx_charge = index
-            index = index +1
-
-        #Extract the atom partial charges from the ATOM section
+        atoms = struct.atoms
         charges = []
-        for line in range(start_idx_charge,end_idx_charge):
-            charges.append(float(text[line].split()[-1])) 
 
+        for at in atoms:
+            charges.append(at.charge)
+        
         #Calculate the nearest integer net molecule charge
         sum_charges = sum(charges)
         nearest_integer = int(round(sum_charges))
@@ -275,20 +265,21 @@ class MixtureSystem(object):
             
         print '\n...Total net charge Correction\nOld net charge = %f\nNew net charge = %f\n' % (sum_charges,sum(mod_charges))
         
-        #Editing the mol2 ATOM section to update the partial atom charges
-        index = 0
-        for x in range(start_idx_charge,end_idx_charge):
-            str = text[x].split()[-1]
-            str_mod = '%8.6e' % mod_charges[index]
-            text[x] = text[x].replace(str,str_mod)
-            index = index + 1
+        index=0
+        for at in atoms:
+            at.charge = mod_charges[index]
+            index=index+1
         
-        #Save the new mol2 file with the update charges         
+        mol2file = parmed.formats.Mol2File
         try:
-            file = open(mol2_output_filename,'w')
-            file.writelines(text)
-            file.close()
+            mol2file.write(struct,mol2_output_filename)
         except:
-            raise IOError('The output file %s is missing' % mol2_output_filename)
-                
+            raise IOError('It was not possible to write the output filename %s' % mol2_output_filename)
+        
         return 1
+        
+
+
+
+
+        
