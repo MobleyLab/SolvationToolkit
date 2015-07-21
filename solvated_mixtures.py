@@ -140,7 +140,8 @@ class MixtureSystem(object):
                 #Convert SMILES strings to mol2 and frcmod files for antechamber
                 openmoltools.openeye.smiles_to_antechamber(smiles_string, mol2_filename, frcmod_filename)
                 #Correct the mol2 file partial atom charges to have a total net integer molecule charge  
-                self.mol2_charge_corrections(mol2_filename, mol2_filename, self.n_monomers[k])
+                mol2f = parmed.formats.Mol2File
+                mol2f.write(parmed.load_file(mol2_filename).fix_charges(),mol2_filename)
             #Generate amber coordinate and topology files for the unsolvated molecules
             mol_name = os.path.basename(mol2_filename).split('.')[0]
             openmoltools.amber.run_tleap(mol_name, mol2_filename,frcmod_filename, prmtop_filename, inpcrd_filename)
@@ -212,74 +213,3 @@ class MixtureSystem(object):
         #Write GROMACS topology/coordinate files
         gromacs_topology.write( self.top_filename )
         parmed.gromacs.GromacsGroFile.write( gromacs_topology, self.gro_filename )
-
-
-    def mol2_charge_corrections(self,mol2_input_filename,mol2_output_filename,N,tleap_thds=0.01):
-        """Correct the input mol2 file partial atom charges to have a total net integer molecule charge.
-        
-        Parameters
-        ----------
-        mol2_input_filename: the mol2 input filename
-        mol2_output_filename: the mol2 output filename
-        N: the total number of molecules present in the mixture
-        tleap_thds: The selected tleap threshold
-
-        Output
-        ------
-        If the charge correction is succesfull the code 1 is returned. If the charge update is not necessary the code 0 is returned
-
-        Notes
-        -----
-        If the net molecule charge in not an integer, the closest net molecule charge integer is evaluated. The average excess charge is then 
-        equally distribuited among the partial atom charges if the excess charge times the number of molecules present in the mixture is greather
-        than a selected tleap charge threshold.
-        
-        """
-
-        #Read in the mol2 filename
-        try:
-            struct = parmed.load_file(mol2_input_filename)
-        except:
-            raise IOError('The input filename %s is missing' % mol2_input_filename)
-        
-        atoms = struct.atoms
-        charges = []
-
-        for at in atoms:
-            charges.append(at.charge)
-        
-        #Calculate the nearest integer net molecule charge
-        sum_charges = sum(charges)
-        nearest_integer = int(round(sum_charges))
-        
-        #Check if the excess charge times the total number of mixture molecule exceeds a tleap selected threshold
-        if (abs(nearest_integer - sum_charges))*N < tleap_thds:
-            print '\n...Charge correction is not required\n'
-            return 0               
-        
-        #Average excess charge
-        delta = (nearest_integer - sum_charges)/len(charges)
-        
-        #Corrected charges
-        mod_charges = [x + delta for x in charges]
-            
-        print '\n...Total net charge Correction\nOld net charge = %f\nNew net charge = %f\n' % (sum_charges,sum(mod_charges))
-        
-        index=0
-        for at in atoms:
-            at.charge = mod_charges[index]
-            index=index+1
-        
-        mol2file = parmed.formats.Mol2File
-        try:
-            mol2file.write(struct,mol2_output_filename)
-        except:
-            raise IOError('It was not possible to write the output filename %s' % mol2_output_filename)
-        
-        return 1
-        
-
-
-
-
-        
