@@ -166,13 +166,9 @@ class MixtureSystem(object):
         -----
         
         """
-
-        #Read in AMBER format parameter/coordinate file to ParmEd object
-        structure = parmed.amber.AmberParm( self.prmtop_filename, self.inpcrd_filename )
-        #Generate GROMACS topology and coordinates
-        gromacs_topology = parmed.gromacs.GromacsTopologyFile.from_structure( structure )
-        
-
+        #Read in AMBER format parameter/coordinate file and convert in gromacs
+        gromacs_topology = parmed.load_file( self.prmtop_filename, self.inpcrd_filename )
+     
         #Split the topology into components and check that we have the right number of components
         components = gromacs_topology.split()
         assert len(components)==len(self.n_monomers), "Number of monomers and number of components in the combined topology do not match." 
@@ -188,7 +184,7 @@ class MixtureSystem(object):
             
         #Check that the passed solute index is correct
         check_solute_indices = range(0,len(self.n_monomers))
-        assert self.solute_index in check_solute_indices and isinstance(self.solute_index, int), "Solute index must be an element of the list: %s. The value passed is: %s" % (check_solute_indices,self.solute_index)
+        assert self.solute_index in check_solute_indices and isinstance(self.solute_index, int) or self.solute_index == None, "Solute index must be an element of the list: %s or None. The value passed is: %s" % (check_solute_indices,self.solute_index)
             
         #Now all we have to do is to change the name of the solute molecule (residue, in ParmEd) and ParmEd will automatically make it a new molecule on write.
         #To do this, first build a list of the residue names we want, by molecule
@@ -211,5 +207,5 @@ class MixtureSystem(object):
 
 
         #Write GROMACS topology/coordinate files
-        gromacs_topology.write( self.top_filename )
-        parmed.gromacs.GromacsGroFile.write( gromacs_topology, self.gro_filename )
+        gromacs_topology.save(self.top_filename, format='gromacs')
+        gromacs_topology.save(self.gro_filename)
