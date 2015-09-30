@@ -43,8 +43,9 @@ solute_smiles = [ get_smiles(name) for name in solutes ]
 solvent_smiles = [ get_smiles(name) for name in solvents ]
 
 #Number of solute/solvent molecules
-Nsolu = 3
-Nsolv = 100
+#NOTE: These are just placeholders and you should update based on your intended system size and solute/solvent size. Probably a better general strategy is to estimate the number of molecules you want based on a target box size, given an estimate of the density, etc. 
+Nsolu = 1
+Nsolv = 800
 
 #Construct systems
 for idx in range( len( solutes) ):
