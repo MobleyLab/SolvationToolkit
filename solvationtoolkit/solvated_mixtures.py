@@ -1,6 +1,6 @@
 ######################################################################
 # SolvationToolkit: A toolkit for setting up molecular simulations of mixtures
-# Copyright 2011-2015 UC Irvine and the Authors
+# Copyright 2011-2016 UC Irvine and the Authors
 #
 # Authors: David Mobley and Gaetano Calabro
 # With thanks to Kyle Beauchamp, whose liquid_tools.py provided an initial basis for this code
