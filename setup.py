@@ -47,6 +47,6 @@ setup(
     package_data         = data,
     include_package_data = True,
       
-    entry_points         = {'console_scripts':['start=scripts/start.py']},
+    #entry_points         = {'console_scripts':['start=scripts/start.py']},
     zip_safe             = False
 )
