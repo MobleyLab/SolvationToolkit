@@ -29,6 +29,16 @@ import mdtraj as md
 import parmed
 import openmoltools
 
+# If ParmEd is older than 2.0.4 then it will not work, raise an error
+try:
+    ver = parmed.version
+except:
+    oldParmEd = Exception('ERROR: ParmEd is too old, please upgrade to 2.0.4 or later')
+    raise oldParmEd
+if ver < (2,0,4):
+    raise RuntimeError("ParmEd is too old, please upgrade to 2.0.4 or later")
+
+
 def make_path(filename):
     try:
         path = os.path.split(filename)[0]
