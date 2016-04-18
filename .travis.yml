@@ -8,6 +8,7 @@ branches:
 
 install:
   - source devtools/ci/install.sh
+  - export PYTHONUNBUFFERED=true
 
 env:
   matrix:
