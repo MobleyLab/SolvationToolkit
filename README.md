@@ -22,4 +22,4 @@ At this point its usage is limited to non-water solutes/solvents, but other than
 * See issue tracker
 
 ## Disclaimers
-* This code is currently in approximately beta release status. Use at your own risk. We will almost certainly be making changes to the API in the near future. 
+* This code is currently in approximately beta release status. Use at your own risk. We will almost certainly be making changes to the API in the near future.  
