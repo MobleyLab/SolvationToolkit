@@ -28,6 +28,8 @@ import itertools
 import mdtraj as md
 import parmed
 import openmoltools
+import mol2tosdf
+
 
 def make_path(filename):
     try:
@@ -108,9 +110,10 @@ class MixtureSystem(object):
         self.top_filename = DATA_PATH + "gromacs/" + self.identifier + ".top"
         self.gro_filename = DATA_PATH + "gromacs/" + self.identifier + ".gro"
         
-        
         self.gaff_mol2_filenames = [DATA_PATH + "monomers/" + string + ".mol2" for string in self.labels]
         self.frcmod_filenames = [DATA_PATH + "monomers/" + string + ".frcmod" for string in self.labels]
+        
+        self.sdf_filenames = [DATA_PATH + "monomers/" + string + ".sdf" for string in self.labels]
         
         #input_crd_filenames and prmtop_filenames stores the AMBER filenames of the molecules without solvation
         self.inpcrd_filenames = [DATA_PATH + "tleap/" + string + ".inpcrd" for string in self.labels]
@@ -136,6 +139,7 @@ class MixtureSystem(object):
             frcmod_filename = self.frcmod_filenames[k]
             inpcrd_filename = self.inpcrd_filenames[k]
             prmtop_filename = self.prmtop_filenames[k]
+            sdf_filename = self.sdf_filenames[k]
             if not (os.path.exists(mol2_filename) and os.path.exists(frcmod_filename)):
                 #Convert SMILES strings to mol2 and frcmod files for antechamber
                 openmoltools.openeye.smiles_to_antechamber(smiles_string, mol2_filename, frcmod_filename)
@@ -145,6 +149,9 @@ class MixtureSystem(object):
             #Generate amber coordinate and topology files for the unsolvated molecules
             mol_name = os.path.basename(mol2_filename).split('.')[0]
             openmoltools.amber.run_tleap(mol_name, mol2_filename,frcmod_filename, prmtop_filename, inpcrd_filename)
+    
+            #Read Mol2 File and write SDF file
+            mol2tosdf.writeSDF(mol2_filename, sdf_filename, mol_name)
 
         #Generate unique residue names for molecules in mol2 files
         openmoltools.utils.randomize_mol2_residue_names( self.gaff_mol2_filenames )
