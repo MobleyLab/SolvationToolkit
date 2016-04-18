@@ -1,4 +1,4 @@
-MINICONDA=Miniconda2-latest-Linux-x86_64.sh
+MINICONDA=Miniconda-latest-Linux-x86_64.sh
 MINICONDA_MD5=$(curl -s http://repo.continuum.io/miniconda/ | grep -A3 $MINICONDA | sed -n '4p' | sed -n 's/ *<td>\(.*\)<\/td> */\1/p')
 wget http://repo.continuum.io/miniconda/$MINICONDA
 if [[ $MINICONDA_MD5 != $(md5sum $MINICONDA | cut -d ' ' -f 1) ]]; then
@@ -6,6 +6,7 @@ if [[ $MINICONDA_MD5 != $(md5sum $MINICONDA | cut -d ' ' -f 1) ]]; then
     exit 1
 fi
 bash $MINICONDA -b
+PIP_ARGS="-U"
 
 export PATH=$HOME/miniconda/bin:$PATH
 
