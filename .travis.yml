@@ -1,5 +1,7 @@
 language: python
 
+sudo: required
+
 branches:
   only:
     - master

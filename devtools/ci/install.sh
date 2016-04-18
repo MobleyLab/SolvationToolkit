@@ -16,8 +16,11 @@ conda update --yes conda
 conda config --add channels http://conda.binstar.org/omnia
 conda config --add channels https://conda.binstar.org/rdkit
 
-
-conda install --yes jinja2 binstar pip openmoltools packmol pytables mdtraj
+echo "HERE>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+conda install --yes mdtraj
+echo "HERE2>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+"
+conda install --yes jinja2 binstar pip openmoltools packmol pytables 
 
 
 git clone https://github.com/ParmEd/ParmEd.git
