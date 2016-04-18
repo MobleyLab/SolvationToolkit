@@ -27,3 +27,4 @@ solvationtoolkit: Tools for setting up mixtures of small organic molecules for A
 """
 
 from solvationtoolkit import solvated_mixtures
+from solvationtoolkit import mol2tosdf
