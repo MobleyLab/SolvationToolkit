@@ -49,4 +49,5 @@ setup(
       
     #entry_points         = {'console_scripts':['start=scripts/start.py']},
     zip_safe             = False
+
 )
