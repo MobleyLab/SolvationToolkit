@@ -17,13 +17,13 @@ conda config --add channels http://conda.binstar.org/omnia
 conda config --add channels https://conda.binstar.org/rdkit
 
 
-conda install --yes jinja2 binstar pip openmoltools packmol pytables mdtraj
+conda install --yes jinja2 binstar pip openmoltools packmol pytables
 
 
 git clone https://github.com/ParmEd/ParmEd.git
 cd ParmEd && python setup.py install
 cd ..
 
-conda create -y -n myenv python=$PYTHON_VERSION openmoltools packmol numpy scipy netcdf4 pandas nose openmm pytables mdtraj
+conda create -y -n myenv python=$PYTHON_VERSION openmoltools packmol numpy scipy netcdf4 pandas nose openmm pytables
 
 source activate myenv
