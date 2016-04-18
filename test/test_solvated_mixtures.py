@@ -1,6 +1,6 @@
 import os.path, sys
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
-from solvated_mixtures import MixtureSystem
+from solvationtoolkit.solvated_mixtures import MixtureSystem
 from openmoltools import utils
 import unittest
 from unittest import skipIf

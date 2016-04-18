@@ -22,7 +22,7 @@
 ######################################################################
 
 
-from solvated_mixtures import *
+from solvationtoolkit.solvated_mixtures import *
 from openeye.oechem import *
 from openeye.oeiupac import *
 
