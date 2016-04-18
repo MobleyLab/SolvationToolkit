@@ -17,17 +17,19 @@ conda update --yes conda
 conda config --add channels http://conda.binstar.org/omnia
 conda config --add channels https://conda.binstar.org/rdkit
 
-echo "HERE>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+
 conda install --yes mdtraj
-echo "HERE2>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-"
+
 conda install --yes jinja2 binstar pip openmoltools packmol pytables 
 
 
 git clone https://github.com/ParmEd/ParmEd.git
+
 cd ParmEd && python setup.py install
 cd ..
 
 conda create -y -n myenv python=$PYTHON_VERSION openmoltools packmol numpy scipy netcdf4 pandas nose openmm pytables mdtraj
 
 source activate myenv
+
+pip install -i https://pypi.anaconda.org/OpenEye/simple openeye-toolkits
