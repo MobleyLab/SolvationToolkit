@@ -155,7 +155,6 @@ class MixtureSystem(object):
             if not (os.path.exists(mol2_filename) and os.path.exists(frcmod_filename)):
                 #Convert SMILES strings to mol2 and frcmod files for antechamber
                 openmoltools.openeye.smiles_to_antechamber(smiles_string, mol2_filename, frcmod_filename)
-                mol2tosdf.writeSDF(mol2_filename, sdf_filename, mol_name) # Temporarily called here (see comment below)
                 #Correct the mol2 file partial atom charges to have a total net integer molecule charge  
                 mol2f = parmed.formats.Mol2File
                 mol2f.write(parmed.load_file(mol2_filename).fix_charges(),mol2_filename)
@@ -167,7 +166,7 @@ class MixtureSystem(object):
             mol2tosdf.writeSDF(mol2_filename, sdf_filename, mol_name)
 
         #Generate unique residue names for molecules in mol2 files
-        #openmoltools.utils.randomize_mol2_residue_names( self.gaff_mol2_filenames ) # Temporarily commented - This function is being called above, because parmed is generating the wrong bond types for the molecules in the mol2 file when using fix_charges. This must be changed when parmed is fixed.
+        openmoltools.utils.randomize_mol2_residue_names( self.gaff_mol2_filenames ) 
         
     def build_boxes(self):
         """Build an initial box with packmol and use it to generate AMBER files."""
