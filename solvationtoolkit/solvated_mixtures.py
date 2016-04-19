@@ -179,11 +179,12 @@ class MixtureSystem(object):
             tleap_cmd = openmoltools.amber.build_mixture_prmtop(self.gaff_mol2_filenames, self.frcmod_filenames, self.box_pdb_filename, self.prmtop_filename, self.inpcrd_filename)
 
     def convert_to_gromacs(self):
-        """From AMBER-format prmtop and crd files, generate final solvated GROMACS topology and coordinate files. Ensure that 
+        """From AMBER-format prmtop and crd files, generate final solvated GROMACS topology and coordinate files. Ensure that the desired "solute" (as per solute_index) has a single monomer treated via a unique residue name to allow treatment as a solute separate from other residues of the same name (if desired). The solute will be given residue name "solute" Also, check to see if there are "WAT" residues present, in which case tleap will have re-ordered them to the end of the data file. If so, update data structures accordingly and handle conversion appropriately. 
 
         Notes
         -----
-        
+        Currently, this function ensures that - after AMBER conversion reorders water molecules with residue names 'WAT' to occur last in the resulting parameter/coordinate files - the internal data structures are updated to have the correct order in the relevant lists (labels, smiles_strings, n_monomers). If for some reason GROMACS conversion were removed, these would need to be updated elsewhere. (Probably this should be done anyway, as this is not really a GROMACS issue.)
+
         """
         #Read in AMBER format parameter/coordinate file and convert in gromacs
         gromacs_topology = parmed.load_file( self.prmtop_filename, self.inpcrd_filename )
