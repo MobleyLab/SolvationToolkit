@@ -31,13 +31,15 @@ import openmoltools
 import mol2tosdf
 
 
-# If ParmEd is older than 2.0.4 then it will not work, raise an error
-try:
+# We require at least ParmEd 2.5.1 because of issues with the .mol2 writer (issue #691 on ParmEd) prior to that.
+# Previously 2.0.4 or later was required due to issues with FudgeLJ/FudgeQQ in resulting GROMACS topologies in
+#  earlier versions
+try: #Try to get version tag
     ver = parmed.version
-except:
+except: #If too old for version tag, it is too old
     oldParmEd = Exception('ERROR: ParmEd is too old, please upgrade to 2.0.4 or later')
     raise oldParmEd
-if ver < (2,0,4):
+if ver < (2,5,1):
     raise RuntimeError("ParmEd is too old, please upgrade to 2.0.4 or later")
 
 
