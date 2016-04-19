@@ -37,10 +37,10 @@ import mol2tosdf
 try: #Try to get version tag
     ver = parmed.version
 except: #If too old for version tag, it is too old
-    oldParmEd = Exception('ERROR: ParmEd is too old, please upgrade to 2.0.4 or later')
+    oldParmEd = Exception('ERROR: ParmEd is too old, please upgrade to 2.5.1 or later')
     raise oldParmEd
 if ver < (2,5,1):
-    raise RuntimeError("ParmEd is too old, please upgrade to 2.0.4 or later")
+    raise RuntimeError("ParmEd is too old, please upgrade to 2.5.1 or later")
 
 
 def make_path(filename):
