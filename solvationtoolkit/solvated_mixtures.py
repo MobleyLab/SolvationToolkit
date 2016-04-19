@@ -192,6 +192,40 @@ class MixtureSystem(object):
         components = gromacs_topology.split()
         assert len(components)==len(self.n_monomers), "Number of monomers and number of components in the combined topology do not match." 
 
+        ####    HANDLE ORDERING OF WATER   ####
+        #Check if any of the residues is named "WAT". If it is, antechamber will potentially have re-ordered it from where it was (it places residues named "WAT" at the end) so it may no longer appear in the order in which we expect.
+        resnames = [ components[i][0].residues[0].name for i in range(len(components)) ]
+        wat_present = False
+        if 'WAT' in resnames:
+            wat_present = True
+
+        #Manage presence of WAT residues and possible re-ordering
+        if wat_present:
+            #If there is a water present, then we MIGHT have re-ordering. Check smiles to find out where it was originally.
+            wat_orig_index = self.smiles_strings.index('O')
+            #Where is it now?
+            wat_new_index = resnames.index('WAT')
+            #Reordered? If so, we have to adjust the ordering of n_monomers, smiles_strings, labels,
+            # and potentially solute_index. Filenames will be preserved since these were already created
+            if wat_orig_index <> wat_new_index:
+                #tleap moves water to the end so if they aren't equal, we know where water will be...
+                self.n_monomers = self.n_monomers[0:wat_orig_index] + self.n_monomers[wat_orig_index+1:] + [self.n_monomers[wat_orig_index]] 
+                self.smiles_strings = self.smiles_strings[0:wat_orig_index] + self.smiles_strings[wat_orig_index+1:] + [self.smiles_strings[wat_orig_index]] 
+                self.labels = self.labels[0:wat_orig_index] + self.labels[wat_orig_index+1:] + [self.labels[wat_orig_index] ]
+                #Check solute_index and alter if needed
+                if not self.solute_index=='auto' and not self.solute_index==None:
+                    #Index unchanged if it's before the water
+                    if self.solute_index < wat_orig_index:
+                        pass
+                    #If it is the water, now it is at the end
+                    elif self.solute_index == wat_orig_index:
+                        self.solute_index = len(self.n_monomers)-1
+                    #If it was after the water, then it moved up one position
+                    else:
+                        self.solute_index -= 1
+        ####    END HANDLING OF ORDERING OF WATER   ####
+                
+             
         #Figure out what we're treating as the solute (if anything)
         if self.solute_index=='auto':
             #Check which of the molecules is present in qty 1
