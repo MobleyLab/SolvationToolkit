@@ -205,7 +205,7 @@ class MixtureSystem(object):
             wat_new_index = resnames.index('WAT')
             #Reordered? If so, we have to adjust the ordering of n_monomers, smiles_strings, labels,
             # and potentially solute_index. Filenames will be preserved since these were already created
-            if wat_orig_index <> wat_new_index:
+            if wat_orig_index != wat_new_index:
                 #tleap moves water to the end so if they aren't equal, we know where water will be...
                 self.n_monomers = self.n_monomers[0:wat_orig_index] + self.n_monomers[wat_orig_index+1:] + [self.n_monomers[wat_orig_index]] 
                 self.smiles_strings = self.smiles_strings[0:wat_orig_index] + self.smiles_strings[wat_orig_index+1:] + [self.smiles_strings[wat_orig_index]] 
