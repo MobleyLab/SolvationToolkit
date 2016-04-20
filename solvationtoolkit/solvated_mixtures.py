@@ -37,10 +37,10 @@ import mol2tosdf
 try: #Try to get version tag
     ver = parmed.version
 except: #If too old for version tag, it is too old
-    oldParmEd = Exception('ERROR: ParmEd is too old, please upgrade to 2.0.4 or later')
+    oldParmEd = Exception('ERROR: ParmEd is too old, please upgrade to 2.5.1 or later')
     raise oldParmEd
 if ver < (2,5,1):
-    raise RuntimeError("ParmEd is too old, please upgrade to 2.0.4 or later")
+    raise RuntimeError("ParmEd is too old, please upgrade to 2.5.1 or later")
 
 
 def make_path(filename):
@@ -155,7 +155,6 @@ class MixtureSystem(object):
             if not (os.path.exists(mol2_filename) and os.path.exists(frcmod_filename)):
                 #Convert SMILES strings to mol2 and frcmod files for antechamber
                 openmoltools.openeye.smiles_to_antechamber(smiles_string, mol2_filename, frcmod_filename)
-                mol2tosdf.writeSDF(mol2_filename, sdf_filename, mol_name) # Temporarily called here (see comment below)
                 #Correct the mol2 file partial atom charges to have a total net integer molecule charge  
                 mol2f = parmed.formats.Mol2File
                 mol2f.write(parmed.load_file(mol2_filename).fix_charges(),mol2_filename)
@@ -167,7 +166,7 @@ class MixtureSystem(object):
             mol2tosdf.writeSDF(mol2_filename, sdf_filename, mol_name)
 
         #Generate unique residue names for molecules in mol2 files
-        #openmoltools.utils.randomize_mol2_residue_names( self.gaff_mol2_filenames ) # Temporarily commented - This function is being called above, because parmed is generating the wrong bond types for the molecules in the mol2 file when using fix_charges. This must be changed when parmed is fixed.
+        openmoltools.utils.randomize_mol2_residue_names( self.gaff_mol2_filenames ) 
         
     def build_boxes(self):
         """Build an initial box with packmol and use it to generate AMBER files."""
@@ -180,11 +179,12 @@ class MixtureSystem(object):
             tleap_cmd = openmoltools.amber.build_mixture_prmtop(self.gaff_mol2_filenames, self.frcmod_filenames, self.box_pdb_filename, self.prmtop_filename, self.inpcrd_filename)
 
     def convert_to_gromacs(self):
-        """From AMBER-format prmtop and crd files, generate final solvated GROMACS topology and coordinate files. Ensure that 
+        """From AMBER-format prmtop and crd files, generate final solvated GROMACS topology and coordinate files. Ensure that the desired "solute" (as per solute_index) has a single monomer treated via a unique residue name to allow treatment as a solute separate from other residues of the same name (if desired). The solute will be given residue name "solute" Also, check to see if there are "WAT" residues present, in which case tleap will have re-ordered them to the end of the data file. If so, update data structures accordingly and handle conversion appropriately. 
 
         Notes
         -----
-        
+        Currently, this function ensures that - after AMBER conversion reorders water molecules with residue names 'WAT' to occur last in the resulting parameter/coordinate files - the internal data structures are updated to have the correct order in the relevant lists (labels, smiles_strings, n_monomers). If for some reason GROMACS conversion were removed, these would need to be updated elsewhere. (Probably this should be done anyway, as this is not really a GROMACS issue.)
+
         """
         #Read in AMBER format parameter/coordinate file and convert in gromacs
         gromacs_topology = parmed.load_file( self.prmtop_filename, self.inpcrd_filename )
@@ -193,6 +193,37 @@ class MixtureSystem(object):
         components = gromacs_topology.split()
         assert len(components)==len(self.n_monomers), "Number of monomers and number of components in the combined topology do not match." 
 
+        ####    HANDLE ORDERING OF WATER   ####
+        #Check if any of the residues is named "WAT". If it is, antechamber will potentially have re-ordered it from where it was (it places residues named "WAT" at the end) so it may no longer appear in the order in which we expect.
+        resnames = [ components[i][0].residues[0].name for i in range(len(components)) ]
+        wat_present = False
+        #Manage presence of WAT residues and possible re-ordering
+        if 'WAT' in resnames:
+            #If there is a water present, then we MIGHT have re-ordering. Check smiles to find out where it was originally.
+            wat_orig_index = self.smiles_strings.index('O')
+            #Where is it now?
+            wat_new_index = resnames.index('WAT')
+            #Reordered? If so, we have to adjust the ordering of n_monomers, smiles_strings, labels,
+            # and potentially solute_index. Filenames will be preserved since these were already created
+            if wat_orig_index != wat_new_index:
+                #tleap moves water to the end so if they aren't equal, we know where water will be...
+                self.n_monomers = self.n_monomers[0:wat_orig_index] + self.n_monomers[wat_orig_index+1:] + [self.n_monomers[wat_orig_index]] 
+                self.smiles_strings = self.smiles_strings[0:wat_orig_index] + self.smiles_strings[wat_orig_index+1:] + [self.smiles_strings[wat_orig_index]] 
+                self.labels = self.labels[0:wat_orig_index] + self.labels[wat_orig_index+1:] + [self.labels[wat_orig_index] ]
+                #Check solute_index and alter if needed
+                if not self.solute_index=='auto' and not self.solute_index==None:
+                    #Index unchanged if it's before the water
+                    if self.solute_index < wat_orig_index:
+                        pass
+                    #If it is the water, now it is at the end
+                    elif self.solute_index == wat_orig_index:
+                        self.solute_index = len(self.n_monomers)-1
+                    #If it was after the water, then it moved up one position
+                    else:
+                        self.solute_index -= 1
+        ####    END HANDLING OF ORDERING OF WATER   ####
+                
+             
         #Figure out what we're treating as the solute (if anything)
         if self.solute_index=='auto':
             #Check which of the molecules is present in qty 1

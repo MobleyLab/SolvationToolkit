@@ -86,7 +86,7 @@ def createTag(tag_names, mol, charges):
 def manipulatePartialChargesTag(charges):
     """Transform charges from float to string format."""
     value = ''
-    print "Charges: %s" % str(charges)
+    #print("Charges: %s" % str(charges))
     for charge in charges:
         value += str(charge) + '\n'
     return value
@@ -97,5 +97,5 @@ def manipulateBondOrdersTag(mol):
     partial_bonds_order = ''
     for bond in mol.GetBonds():
         partial_bonds_order += str(float(bond.GetOrder())) + '\n'
-    print 'Partial_bonds_order: ' + partial_bonds_order
+    #print ('Partial_bonds_order: ' + partial_bonds_order)
     return partial_bonds_order
