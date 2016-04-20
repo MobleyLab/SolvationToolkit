@@ -197,11 +197,8 @@ class MixtureSystem(object):
         #Check if any of the residues is named "WAT". If it is, antechamber will potentially have re-ordered it from where it was (it places residues named "WAT" at the end) so it may no longer appear in the order in which we expect.
         resnames = [ components[i][0].residues[0].name for i in range(len(components)) ]
         wat_present = False
-        if 'WAT' in resnames:
-            wat_present = True
-
         #Manage presence of WAT residues and possible re-ordering
-        if wat_present:
+        if 'WAT' in resnames:
             #If there is a water present, then we MIGHT have re-ordering. Check smiles to find out where it was originally.
             wat_orig_index = self.smiles_strings.index('O')
             #Where is it now?
