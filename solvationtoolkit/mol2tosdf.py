@@ -28,14 +28,21 @@ import openeye.oequacpac as oequacpac
 
 
 def writeSDF(mol2_filename, sdf_filename, mol_name):
-    """For generating .sdf file format from .mol2 file
+    """For generating .sdf file format from .mol2 file, using OEIFlavor (OpenEye). Creates two tags (partial_charges and partial_bond_orders) in the .sdf file using values from the reference (.mol2 file).
     
     Parameters
     ----------
     mol2_filename: str
+        Mol2 filename used to write the .sdf file. The .mol2 file is preserved.
     sdf_filename: str
+        SDF filename (path) used to save the sdf file generated.
     mol_name: str
-        
+        Name of molecule used to write the title for the .sdf file generated.
+    
+    Notes
+    -----------
+    In partial_bonds_orders tag, .mol2 bond orders are translated to .sdf bond orders using OEIFlavor, aromatic bonds ('ar') are transformed to 1 or 2.
+
     Limitations
     -----------
     Creates only two tags in .sdf file. The tags are partial_charges and partial_bond_orders. Their values are set according to the correspondent .mol2 file properties.
