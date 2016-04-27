@@ -28,7 +28,7 @@ import openeye.oequacpac as oequacpac
 
 
 def writeSDF(mol2_filename, sdf_filename, mol_name):
-    """For generating .sdf file format from .mol2 file, using OEIFlavor (OpenEye). Creates two tags (partial_charges and partial_bond_orders) in the .sdf file using values from the reference (.mol2 file).
+    """For generating .sdf file format from .mol2 file, using OEIFlavor (OpenEye). Creates three tags (partial_charges, partial_bond_orders, and atom_types) in the .sdf file using values from the reference (.mol2 file).
     
     Parameters
     ----------
@@ -45,7 +45,7 @@ def writeSDF(mol2_filename, sdf_filename, mol_name):
 
     Limitations
     -----------
-    Creates only two tags in .sdf file. The tags are partial_charges and partial_bond_orders. Their values are set according to the correspondent .mol2 file properties.
+    Creates only three tags in .sdf file. The tags are partial_charges, partial_bond_orders, and atom_types (GAFF). Their values are set according to the correspondent .mol2 file properties.
     """
     
     ifs = oemolistream(mol2_filename)
@@ -53,28 +53,31 @@ def writeSDF(mol2_filename, sdf_filename, mol_name):
     ifs.SetFlavor(OEFormat_MOL2, MOL2flavor)
 
     ofs = oemolostream(sdf_filename)
-    tag_names = ['partial_charges', 'partial_bond_orders']
+    tag_names = ['partial_charges', 'partial_bond_orders', 'atom_types']
     
     # Set the title and assign partial charges for the .mol2 file
     for mol in ifs.GetOEGraphMols():
         mol.SetTitle(mol_name)
         molToCharge = OEMol(mol)
-        oequacpac.OEAssignPartialCharges( molToCharge, oequacpac.OECharges_AM1BCCSym )
         
-        # Set partial charges to .mol2 file and store them to put into the .sdf file
+        # Get partial charges and atom types from .mol2 file and store them to put into the .sdf file as tags
         charges = []
+        atom_types = []
         for atom, atomCharged in zip(mol.GetAtoms(), molToCharge.GetAtoms()):
             atom.SetPartialCharge( atomCharged.GetPartialCharge() )
             charges += [atom.GetPartialCharge()]
-        
+            atom_types += [atom.GetType()]
+
+        print "partial charges " + str(charges)
+        print "atom types: " + str(atom_types)
         # Create the tags for the sdf file
-        mol = createTag(tag_names, mol, charges)
+        mol = createTag(tag_names, mol, charges, atom_types)
         OEWriteMolecule(ofs, mol)
     ifs.close()
     ofs.close()
 
 
-def createTag(tag_names, mol, charges):
+def createTag(tag_names, mol, charges, atom_types):
     """Create the tags for sdf file."""
     mol_id = OEGetSDData(mol, 'Mol_Index')
     for tag in tag_names:
@@ -82,6 +85,8 @@ def createTag(tag_names, mol, charges):
             value = manipulatePartialChargesTag(charges)
         elif tag == 'partial_bond_orders':
             value = manipulateBondOrdersTag(mol)
+        elif tag == 'atom_types':
+            value = manipulateAtomTypes(atom_types)
         else:
             #Tag Name Error
             raise Exception('Wrong tag name')
@@ -93,7 +98,6 @@ def createTag(tag_names, mol, charges):
 def manipulatePartialChargesTag(charges):
     """Transform charges from float to string format."""
     value = ''
-    #print("Charges: %s" % str(charges))
     for charge in charges:
         value += str(charge) + '\n'
     return value
@@ -104,5 +108,11 @@ def manipulateBondOrdersTag(mol):
     partial_bonds_order = ''
     for bond in mol.GetBonds():
         partial_bonds_order += str(float(bond.GetOrder())) + '\n'
-    #print ('Partial_bonds_order: ' + partial_bonds_order)
     return partial_bonds_order
+
+def manipulateAtomTypes(atom_types):
+    """Transform atom types to the right string format."""
+    value = ''
+    for atm in atom_types:
+        value += str(atm) + '\n'
+    return value
