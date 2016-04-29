@@ -68,8 +68,8 @@ def writeSDF(mol2_filename, sdf_filename, mol_name):
             charges += [atom.GetPartialCharge()]
             atom_types += [atom.GetType()]
 
-        print "partial charges " + str(charges)
-        print "atom types: " + str(atom_types)
+        #print("partial charges " + str(charges))
+        #print("atom types: " + str(atom_types))
         # Create the tags for the sdf file
         mol = createTag(tag_names, mol, charges, atom_types)
         OEWriteMolecule(ofs, mol)
