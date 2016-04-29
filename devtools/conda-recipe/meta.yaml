@@ -1,6 +1,6 @@
 package:
-  name: openmoltools-dev
-  version: 0.0.0
+  name: solvationtoolkiti-dev
+  version: 0.2.2.dev0
 
 source:
   path: ../../
@@ -13,42 +13,46 @@ requirements:
   build:
     - python
     - setuptools
-    - pandas
-    - six
-    - mdtraj
     - numpy
     - numpydoc
     - scipy
-    - openmm-dev
     - ambermini
-    - pytables
     - parmed-dev
-#    - rdkit    # rdkit is an optional dependency, may want to comment this out for the release version.
+    - rdkit
+    - openmoltools
+    - mdtraj
+    - packmol
+    - netcdf4
+    - pandas
+    - openmm
+    - pytables
   run:
     - python
     - setuptools
-    - pandas
-    - six
-    - mdtraj
     - numpy
     - numpydoc
     - scipy
-    - openmm-dev
     - ambermini
-    - pytables
     - parmed-dev
     - libgfortran ==1.0 # [linux]
-#    - rdkit    # rdkit is an optional dependency, may want to comment this out for the release version.
-
+    - rdkit
+    - openmoltools
+    - mdtraj 
+    - packmol
+    - netcdf4
+    - pandas  
+    - openmm
+    - pytables 
 test:
   requires:
     - nose
-    - openmmtools
+    - packmol
   imports:
     - openmoltools
+    - parmed
   #commands:
   #  - nosetests openmoltools -v -a '!slow'
 
 about:
-  home: https://github.com/choderalab/openmoltools
+  home: https://github.com/mobleylab/solvationtoolkit
   license: GNU Lesser General Public License v2 or later (LGPLv2+)

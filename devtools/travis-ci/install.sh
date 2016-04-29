@@ -10,26 +10,6 @@ PIP_ARGS="-U"
 
 export PATH=$HOME/miniconda/bin:$PATH
 
-sudo apt-get update
-sudo apt-get install -qq -y g++ gfortran csh g++-multilib gcc-multilib openbabel git
-
-conda update --yes conda
-conda config --add channels http://conda.binstar.org/omnia
-conda config --add channels https://conda.binstar.org/rdkit
+conda install --yes conda-build jinja2 anaconda-client pip
 
 
-conda install --yes mdtraj
-
-conda install --yes jinja2 binstar pip openmoltools packmol pytables 
-
-
-git clone https://github.com/ParmEd/ParmEd.git
-
-cd ParmEd && python setup.py install
-cd ..
-
-conda create -y -n myenv python=$PYTHON_VERSION openmoltools packmol numpy scipy netcdf4 pandas nose openmm pytables mdtraj
-
-source activate myenv
-
-pip install -i https://pypi.anaconda.org/OpenEye/simple openeye-toolkits
