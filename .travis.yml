@@ -40,6 +40,8 @@ script:
   - conda install --yes --quiet rdkit
   # Install OpenEye toolkit if we have unencrypted the license file.
   - if [ "$TRAVIS_SECURE_ENV_VARS" == true ] ; then pip install $OPENEYE_CHANNEL openeye-toolkits; fi
+  #TEMPORARILY - DO IT ANYWAY
+  - if [ "$TRAVIS_SECURE_ENV_VARS" == false ] ; then pip install $OPENEYE_CHANNEL openeye-toolkits; fi
   # Test the package
   - cd devtools && nosetests $PACKAGENAME --nocapture --verbosity=2 --with-doctest --with-timer -a '!slow' && cd ..
 
