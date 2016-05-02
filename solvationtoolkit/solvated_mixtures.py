@@ -157,7 +157,7 @@ class MixtureSystem(object):
                 openmoltools.openeye.smiles_to_antechamber(smiles_string, mol2_filename, frcmod_filename)
                 #Correct the mol2 file partial atom charges to have a total net integer molecule charge  
                 mol2f = parmed.formats.Mol2File
-                mol2f.write(parmed.load_file(mol2_filename).fix_charges(),mol2_filename)
+                mol2f.write(parmed.load_file(mol2_filename).fix_charges(),mol2_filename, compress_whitespace=True)
             #Generate amber coordinate and topology files for the unsolvated molecules
             mol_name = os.path.basename(mol2_filename).split('.')[0]
             openmoltools.amber.run_tleap(mol_name, mol2_filename,frcmod_filename, prmtop_filename, inpcrd_filename)
