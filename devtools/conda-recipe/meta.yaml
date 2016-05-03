@@ -18,6 +18,7 @@ requirements:
     - scipy
     - ambermini
     - parmed-dev
+    - rdkit
     - openmoltools
     - mdtraj
     - packmol
@@ -33,6 +34,7 @@ requirements:
     - scipy
     - ambermini
     - parmed-dev
+    - rdkit
     - libgfortran ==1.0 # [linux]
     - openmoltools
     - mdtraj 
