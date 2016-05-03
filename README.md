@@ -5,9 +5,7 @@
 # SolvationToolkit
 Tools for setting up arbitrary (currently non-water) solute-solvent mixtures for simulation in GROMACS or AMBER formats. 
 
-At this point what's here consists primarily of `solvated_mixtures.py` which sets up a class structure to use openmoltools (and related utilities) to automatically set up simulations of mixtures of solvents/solutes, and `start.py` which gives an example driver script using this to set up simulations of several mixtures. Automated testing is also implemented. 
-
-At this point its usage is limited to non-water solutes/solvents, but other than that it should basically work for any solute/solvent covered by GAFF.  
+At this point what's here consists primarily of `solvationtoolkit.solvated_mixtures` which sets up a class structure to use openmoltools (and related utilities) to automatically set up simulations of mixtures of solvents/solutes, and `scripts/start.py` which gives an example driver script using this to set up simulations of several mixtures. Automated testing is also implemented. 
 
 
 ## Prerequisites

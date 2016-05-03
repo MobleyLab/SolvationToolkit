@@ -28,7 +28,7 @@ import itertools
 import mdtraj as md
 import parmed
 import openmoltools
-import mol2tosdf
+import solvationtoolkit.mol2tosdf as mol2tosdf
 
 
 # We require at least ParmEd 2.5.1 because of issues with the .mol2 writer (issue #691 on ParmEd) prior to that.

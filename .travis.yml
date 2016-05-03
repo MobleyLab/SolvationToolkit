@@ -1,20 +1,68 @@
-language: python
-
-sudo: required
+language: c
+sudo: false
+addons:
+  apt:
+    sources:
+    - ubuntu-toolchain-r-test
+    packages:
+      - g++
+      - gfortran
+      - valgrind
+      - csh
+      - g++-multilib
+      - gcc-multilib
 
 branches:
   only:
     - master
 
-install:
-  - source devtools/ci/install.sh
+before_install:
+  # Configure environment.
+  - source devtools/travis-ci/install.sh
   - export PYTHONUNBUFFERED=true
+  - echo $TRAVIS_SECURE_ENV_VARS
+  # Unpack encrypted OpenEye license file
+  - openssl aes-256-cbc -K $encrypted_29b74a78b682_key -iv $encrypted_29b74a78b682_iv -in oe_license.txt.enc -out $HOME/oe_license.txt -d
+
+install:
+
+script:
+  # Add omnia channel
+  - conda config --add channels ${ORGNAME}
+  # Build conda dev package
+  - conda build devtools/conda-recipe
+  # Activate test environment
+  - source activate _test
+  # Install package prerequisites
+  - conda install --yes --quiet pip nose nose-timer
+  - conda install --yes --quiet packmol
+  - conda install --yes --quiet rdkit
+  - pip install $OPENEYE_CHANNEL openeye-toolkits
+  # Test the package
+  - cd devtools && nosetests $PACKAGENAME --nocapture --verbosity=2 --with-doctest --with-timer -a '!slow' && cd ..
 
 env:
   matrix:
-    - PYTHON_VERSION=2.7
+    # OpenEye production
+    - CONDA_PY=27  OPENEYE_CHANNEL="-i https://pypi.anaconda.org/openeye/channel/main/simple"
+    - CONDA_PY=34  OPENEYE_CHANNEL="-i https://pypi.anaconda.org/openeye/channel/main/simple"
+    - CONDA_PY=35  OPENEYE_CHANNEL="-i https://pypi.anaconda.org/openeye/channel/main/simple"
+    # OpenEye beta
+    #- CONDA_PY=27  OPENEYE_CHANNEL="--pre -i https://pypi.anaconda.org/openeye/channel/beta/simple"
+    #- CONDA_PY=34  OPENEYE_CHANNEL="--pre -i https://pypi.anaconda.org/openeye/channel/beta/simple"
+    #- CONDA_PY=35  OPENEYE_CHANNEL="--pre -i https://pypi.anaconda.org/openeye/channel/beta/simple"
 
-script:
-  - echo "Testing Stage...."
-  - cd test
-  - nosetests .
+  global:
+    - ORGNAME="omnia"
+    - PACKAGENAME="solvationtoolkit"
+    # Location of decrypted OpenEye license file
+    - OE_LICENSE="$HOME/oe_license.txt"
+    # encrypted BINSTAR_TOKEN for push of dev package to binstar
+    - secure: "S9I5imZ0CJdwfhHzy+Beh8NTFm2ZYpMFCLgvBYT/UsifIKlGynUK2xGi7bDnHLpslT45FUMmjzdpf2QNrfbivVJgiSDTQJc1GCIqGFFKFqerJEEYUkXlBxvWNO+poSOMIzkJqd7xsTodt4CYhGJM1dT6ocaSM7UJgAErrcRJfLo="
+
+after_success:
+  - echo "after_success"
+  #- source devtools/travis-ci/after_success.sh
+
+notifications:
+  email: false
