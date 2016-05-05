@@ -31,7 +31,7 @@ import openmoltools
 import solvationtoolkit.mol2tosdf as mol2tosdf
 
 
-# We require at least ParmEd 2.5.1 because of issues with the .mol2 writer (issue #691 on ParmEd) prior to that.
+# We require at least ParmEd 2.5.1 because of issues with the .mol2 writer (issue #691 on ParmEd) prior to that, and 2.5.1.10 because of OpenEye reader formatting bugs requireing compressed spacing in .mol2 files (added in ParmEd 2.5.1.10)
 # Previously 2.0.4 or later was required due to issues with FudgeLJ/FudgeQQ in resulting GROMACS topologies in
 #  earlier versions
 try: #Try to get version tag
@@ -39,7 +39,7 @@ try: #Try to get version tag
 except: #If too old for version tag, it is too old
     oldParmEd = Exception('ERROR: ParmEd is too old, please upgrade to 2.5.1 or later')
     raise oldParmEd
-if ver < (2,5,1):
+if ver < (2,5,1,10):
     raise RuntimeError("ParmEd is too old, please upgrade to 2.5.1 or later")
 
 
