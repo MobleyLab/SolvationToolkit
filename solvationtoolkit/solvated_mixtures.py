@@ -89,23 +89,24 @@ class MixtureSystem(object):
             if name:
                 if not isinstance(name, str):
                     raise ValueError("Error: The component parameter name %s is not a string" % name)
-
             if label:
                 if not isinstance(label, str):
                     raise ValueError("Error: The component parameter label %s is not a string" % label)
-
             if smile:
                 if not isinstance(smile, str):
                     raise ValueError("Error: The component parameter smile %s is not a string" % smile)
-
+                #TO DO: Check if a string is a valid smile string
             if numbers:
                 if not isinstance(numbers, int):
                     raise ValueError("Error: The component parameter numbers %s is not an integer" % numbers)
-       
+                if numbers < 1:
+                     raise ValueError("Error: The selected number of molecule %s must be a positive integer" % numbers)
             if mole_fraction:
                 if not isinstance(mole_fraction, float):
                     raise ValueError("Error: The component parameter mole_fraction %s is not a float" % mole_fraction)
-                           
+                if mole_fraction < 0.0:
+                    raise ValueError("Error: The selected mole_fraction %s must be a positive integer" % mole_fraction)
+
             # Checking  name and label 
             if not name and not label:
                 raise ValueError("Error: No component parameters name or label has been provided")
@@ -152,13 +153,19 @@ class MixtureSystem(object):
         
         self.component_list = []
 
+        self.smile_strings = []
+        self.n_monomers = []
+        self.mole_fractions = []
+        self.filling_compound = None
+
         self.gaff_mol2_filenames = []
         self.frcmod_filenames = []
         self.inpcrd_filenames = [] 
         self.prmtop_filenames = []
-        self.sdf_filenames = []        
-
-        self.mixture_fname = ''
+        self.sdf_filenames = []
+        
+        self.pdb_fname = '' 
+        
         
     def addComponent(self, name=None, **args):
         
@@ -168,7 +175,6 @@ class MixtureSystem(object):
         
         self.component_list.append(component)
         
-
 
     def just_build(self, amber=False, gromacs=False, prefix_name='mixture'):
         
@@ -182,17 +188,29 @@ class MixtureSystem(object):
                     inpcrd_filename  = os.path.join(self.data_path_monomers, comp.label+'.inpcrd')
                     prmtop_filename  = os.path.join(self.data_path_monomers, comp.label+'.prmtop')
                     sdf_filename = os.path.join(self.data_path_monomers, comp.label+'.sdf')
-                    self.mixture_fname = self.mixture_fname + '_' + comp.label
-
+                    self.pdb_fname = self.pdb_fname + '_' + comp.label
                 else:
                     mol2_filename = os.path.join(self.data_path_monomers, comp.name+'.mol2')
                     frcmod_filename = os.path.join(self.data_path_monomers, comp.name+'.frcmod')
                     inpcrd_filename  = os.path.join(self.data_path_monomers, comp.name+'.inpcrd')
                     prmtop_filename  = os.path.join(self.data_path_monomers, comp.name+'.prmtop')
                     sdf_filename = os.path.join(self.data_path_monomers, comp.name+'.sdf')
-                    self.mixture_fname = self.mixture_fname + '_' + comp.name
+                    self.pdb_fname = self.pdb_fname + '_' + comp.name
+                    
+
+                if comp.numbers:
+                    self.n_monomers.append(comp.numbers)
+                if comp.mole_fraction:
+                    self.mole_fractions.append(comp.mole_fraction)
+
+                if comp.numbers == None and comp.mole_fraction == None:
+                    if self.filling_compound == None:
+                        self.filling_compound = comp
+                    else:
+                        raise ValueError('Error: Two or more fillig compounds have been specified')
 
 
+                self.smile_strings.append(comp.smile)
                 self.gaff_mol2_filenames.append(mol2_filename)
                 self.frcmod_filenames.append(frcmod_filename)
                 self.inpcrd_filenames.append(inpcrd_filename)
@@ -215,7 +233,9 @@ class MixtureSystem(object):
                 mol2tosdf.writeSDF(mol2_filename, sdf_filename, mol_name)
 
 
-            self.mixture_fname = prefix_name +  self.mixture_fname
+            self.pdb_fname = self.pdb_fname[1:]  + ''.join(['_'+str(i) for i in self.n_monomers])
+
+            self.pdb_fname = os.path.join(self.data_path_packmol, self.pdb_fname+'.pdb')
             
             #Generate unique residue names for molecules in mol2 files
             openmoltools.utils.randomize_mol2_residue_names(self.gaff_mol2_filenames) 
@@ -228,12 +248,16 @@ class MixtureSystem(object):
             if not self.gaff_mol2_filenames:
                 raise ValueError('The list of gaff mol2 molecules is empty')
 
-            # HERE WORK IN PROGRESS #
+            if self.n_monomers and self.mole_fractions:
+                    raise ValueError('Error: For different compounds It is not possible to mix mole_fractions and number of molecules')
+
+            if self.n_monomers:
+                size = openmoltools.packmol.approximate_volume_by_density(self.smile_strings, self.n_monomers)
+                packed_trj = openmoltools.packmol.pack_box([md.load(mol2) for mol2 in self.gaff_mol2_filenames], self.n_monomers, box_size = size)
+                packed_trj.save(self.pdb_fname)
 
                 
-
-            
-
+                
 
 
             # if not os.path.exists(self.box_pdb_filename):
