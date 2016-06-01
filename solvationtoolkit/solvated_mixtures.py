@@ -31,6 +31,8 @@ import openmoltools
 import solvationtoolkit.mol2tosdf as mol2tosdf
 from openeye.oechem import *
 from openeye.oeiupac import *
+import simtk.unit as units
+
 
 # We require at least ParmEd 2.5.1 because of issues with the .mol2 writer (issue #691 on ParmEd) prior to that, and 2.5.1.10 because of OpenEye reader formatting bugs requireing compressed spacing in .mol2 files (added in ParmEd 2.5.1.10)
 # Previously 2.0.4 or later was required due to issues with FudgeLJ/FudgeQQ in resulting GROMACS topologies in
@@ -132,17 +134,18 @@ class MixtureSystem(object):
                     except:
                         raise ValueError("Error: The supplied label '%s' could not be parsed" % label)
 
-
             self.name = name
             self.label = label
             self.smile = smile
             self.numbers = numbers
             self.mole_fraction = mole_fraction
+            self.properties = {}
+            self.openeye_mol = None
 
         def __str__(self):
-            return "%s\n%s\n%s\n%s\n%s\n"%(self.name, self.label, self.smile, self.numbers, self.mole_fraction)
-            
-    
+            return "name = %s\nlabel =  %s\nsmile = %s\nnumbers = %s\nmole_frac = %s\nproperties = %s\n" \
+            %(self.name, self.label, self.smile, self.numbers, self.mole_fraction, self.properties)
+                
 
     def __init__(self, directory='data'):
         
@@ -197,10 +200,9 @@ class MixtureSystem(object):
                     sdf_filename = os.path.join(self.data_path_monomers, comp.name+'.sdf')
                     self.pdb_fname = self.pdb_fname + '_' + comp.name
                     
-
                 if comp.numbers:
                     self.n_monomers.append(comp.numbers)
-                if comp.mole_fraction:
+                if comp.mole_fraction is not None:
                     self.mole_fractions.append(comp.mole_fraction)
 
                 if comp.numbers == None and comp.mole_fraction == None:
@@ -208,7 +210,6 @@ class MixtureSystem(object):
                         self.filling_compound = comp
                     else:
                         raise ValueError('Error: Two or more fillig compounds have been specified')
-
 
                 self.smile_strings.append(comp.smile)
                 self.gaff_mol2_filenames.append(mol2_filename)
@@ -241,23 +242,93 @@ class MixtureSystem(object):
             openmoltools.utils.randomize_mol2_residue_names(self.gaff_mol2_filenames) 
 
 
-
         def build_boxes(self):
             """Build an initial box with packmol and use it to generate AMBER files."""
+
+            def mole_fractions_to_n_monomers(self, cutoff):
+                
+                def max_dist_mol(mol):
+                    max_dist = 0.0
+                    coords = mol.GetCoords() # Are the coords always in A in mol2 file?
+                    for i in range(0, mol.NumAtoms()):
+                        crdi = np.array([coords[i][0], coords[i][1], coords[i][2]])
+                        for j in range(i+1, mol.NumAtoms()):
+                            crdj = np.array([coords[j][0], coords[j][1], coords[j][2]])
+                            dist = np.linalg.norm(crdi-crdj)
+                            if dist > max_dist:
+                                max_dist = dist
+                    return max_dist
+                               
+
+                max_dist_mols = 0.0    
+                    
+                for i in range(0, len(self.gaff_mol2_filenames)):
+                    istream = oemolistream(self.gaff_mol2_filenames[i])
+                    mol = oechem.OEMol()
+                    
+                    if not OEReadMolecule(istream, mol):
+                        raise IOError('Error: It was not possible to create the OpenEye molecule object reading the file: %s' % self.gaff_mol2_filenames[i])
+                    
+                    self.openeye_mol = mol
+                    self.component_list[i].properties['wgt'] = oechem.OECalculateMolecularWeight(mol)*units.grams/units.mole
+                    
+                    self.component_list[i].properties['max_dist'] = max_dist_mol(mol) 
+
+                    if self.component_list[i].properties['max_dist']  > max_dist_mols:
+                         max_dist_mols = self.component_list[i].properties['max_dist'] 
+
+                cube_length =  max_dist_mols * units.angstrom + 2*cutoff   
+
+                print cube_length
+                    
+                    
+
+
+                
+
+
 
             if not self.gaff_mol2_filenames:
                 raise ValueError('The list of gaff mol2 molecules is empty')
 
             if self.n_monomers and self.mole_fractions:
-                    raise ValueError('Error: For different compounds It is not possible to mix mole_fractions and number of molecules')
+                    raise ValueError('Error: For different compounds it is not possible to mix mole_fractions and number of molecules')
+
 
             if self.n_monomers:
+                
+                if self.filling_compound:
+                    raise ValueError('Error: The filling compound cannot be mixed with compunds specified with number of molecules')
+ 
                 size = openmoltools.packmol.approximate_volume_by_density(self.smile_strings, self.n_monomers)
                 packed_trj = openmoltools.packmol.pack_box([md.load(mol2) for mol2 in self.gaff_mol2_filenames], self.n_monomers, box_size = size)
                 packed_trj.save(self.pdb_fname)
+                
 
+            if self.mole_fractions:
+
+                inf_dilution_idxs = [i for i, e in enumerate(self.mole_fractions) if e == 0]
                 
+                sum_fractions = sum(self.mole_fractions)
                 
+                if sum_fractions > 1.0:
+                    raise ValueError('Error: The total molar fraction is greater than 1.0')
+
+                # if inf_dilution_idxs and self.filling_compound == None:
+                #     if sum_fractions < 1.0:
+                #         self.n_monomers = [int(round(fraction*len(inf_dilution_idxs)/(1.0 - sum_fractions))) if fraction !=0 else 1 for fraction in self.mole_fractions]
+                #         print self.n_monomers
+                #     else:
+                #         raise ValueError('Error: The total molar fraction is 1 and no dilution molecule can be added')
+
+                    
+                mole_fractions_to_n_monomers(self, cutoff=12 * units.angstrom )
+
+
+
+
+            ############### INSERIRE MOL FRACTIONS HERE ##############
+
 
 
             # if not os.path.exists(self.box_pdb_filename):
