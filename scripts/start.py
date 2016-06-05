@@ -23,16 +23,21 @@
 
 
 from solvationtoolkit.solvated_mixtures import *
-from openeye.oechem import *
-from openeye.oeiupac import *
-
 
 liquids = MixtureSystem()
 
+# liquids.addComponent(numbers=5, name='ethane')
+# liquids.addComponent(numbers=2, name='toluene')
+# liquids.addComponent(numbers=3, name='methane')
+
+
 liquids.addComponent(mole_fraction=0.2, name='ethane')
 liquids.addComponent(mole_fraction=0.0, name='toluene')
-liquids.addComponent(mole_fraction=0.4, name='methane')
+liquids.addComponent(mole_fraction=0.6, name='methane')
 liquids.addComponent(name='water')
+
+# liquids[1]=Component(mole_fraction=0.6, name='methane')
+# print liquids
 
 liquids.build(amber=True, gromacs=True)
 
