@@ -34,8 +34,8 @@ binary_mixture.build(gromacs = True)
 
 # Set up ternary mixture of ethanol, methanol, and water
 ternary_mixture = MixtureSystem()
-binary_mixture.addComponent(name='ethanol', mole_fraction=0.2)
-binary_mixture.addComponent(name='methanol', mole_fraction=0.2)
+ternary_mixture.addComponent(name='ethanol', mole_fraction=0.2)
+ternary_mixture.addComponent(name='methanol', mole_fraction=0.2)
 ternary_mixture.addComponent(name='water')
 
 # Set up a system of phenol at infinite dilution (a single molecule)
