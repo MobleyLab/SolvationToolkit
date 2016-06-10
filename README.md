@@ -1,6 +1,6 @@
 ##Build Status
 
-[![Build Status](https://travis-ci.org/nividic/SolvationToolkit.svg?branch=master)](https://travis-ci.org/nividic/SolvationToolkit)
+[![Build Status](https://travis-ci.org/MobleyLab/SolvationToolkit.svg?branch=master)](https://travis-ci.org/MobleyLab/SolvationToolkit)
 
 # SolvationToolkit
 Tools for setting up arbitrary (currently non-water) solute-solvent mixtures for simulation in GROMACS or AMBER formats, or for use in OpenMM. 
