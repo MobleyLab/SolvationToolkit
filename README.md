@@ -66,8 +66,8 @@ infinite_dilution.addComponent(name='water')
 One or multiple components must be specified, and each component must have a
 name or label (or both), as well as optionally SMILES strings and number of
 molecules or mole fraction. Each component must end up with a string which can
-be used to construct filenames (which will be taken from "label" or, if not
-provided, "name"), and each component must also be unambiguously identified
+be used to construct filenames (which will be taken from `label` or, if not
+provided, `name`), and each component must also be unambiguously identified
 via a name or SMILES string. SMILES strings are the preferred identifier, but
 if SMILES are not provided, it attempts to process the name to a SMILES, and if
 there is no name, the label is interpreted as a name.
