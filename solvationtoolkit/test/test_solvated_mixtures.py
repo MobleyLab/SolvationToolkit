@@ -19,69 +19,131 @@ try:
 except:
     HAVE_OE = False
 
+#Now that OpenEye is working on Travis via encrypted license file, require OpenEye for testing
+if not HAVE_OE:
+    raise(ImportError("SolvationToolkit requires OpenEye's Python toolkits and a valid license."))
+
 
 class TestMixtureSystem(unittest.TestCase):
+
     def setUp(self):
         with utils.enter_temp_directory(): 
-            self.inst = MixtureSystem(['toluene','benzene','cyclohexane','ethane'],['Cc1ccccc1','c1ccccc1','C1CCCCC1','CC'],[3,5,80,7],'test/data/',solute_index=2)
-    #Test class Inizialitazion
-    def test_InsufficientArgs(self):
+            self.inst = MixtureSystem()
+            self.inst.addComponent(name='toluene', smiles='Cc1ccccc1', number=3 )
+            self.inst.addComponent(name='benzene', smiles ='c1ccccc1', number=5 )
+            self.inst.addComponent(name='cyclohexane', smiles='C1CCCCC1', number=80 )
+            self.inst.addComponent(name='ethane', smiles='CC', number=7 )
+
+    #Test class Initialization
+    def test_InsufficientInit(self):
         with utils.enter_temp_directory():
-            #Check wrong number of argumetns
-            self.assertRaises(TypeError,self.inst.__init__)
-            self.assertRaises(TypeError,self.inst.__init__,['toluene','benzene'],['Cc1ccccc1','c1ccccc1'])
+            #Check wrong number of arguments for adding a component - it requires a name or label at least.
+            self.assertRaises(ValueError, self.inst.addComponent, smiles="CC")
+
+            #Check what happens if we don't actually add components
+            self.inst = MixtureSystem()
+            self.assertRaises(TypeError, self.inst.build )
+        
     def test_TypeArgs(self):
         #Check passed input Types
         with utils.enter_temp_directory():
-            self.assertRaises(TypeError,self.inst.__init__,[1,'benzene'],['Cc1ccccc1','c1ccccc1'],[3,5],'data/', solute_index=0)
-            self.assertRaises(TypeError,self.inst.__init__,['toluene','benzene'],['Cc1ccccc1','c1ccccc1'],[3.5,5],'data/', solute_index=0)
-            self.assertRaises(AssertionError,self.inst.__init__,['toluene','benzene'],['Cc1ccccc1','c1ccccc1','C1CCCCC1','CC'],[3,5,80,7],'test/data/', solute_index=2)
-            self.assertRaises(TypeError,self.inst.__init__,['toluene','benzene'],['Cc1ccccc1','c1ccccc1'],[3,5],-3.9, solute_index=0)
-    #Test class methods
-    @skipIf(not HAVE_OE, "Cannot test openeye module without OpenEye tools.")
-    def test_build_monomers(self):
-        with utils.enter_temp_directory():
-            #Check smile strings
-            self.inst = MixtureSystem(['toluene','benzene','cyclohexane','ethane'],['smile_error','c1ccccc1','C1CCCCC1','CC'],[3,5,80,7],'data/', solute_index=2)
-            self.assertRaises(ValueError,self.inst.build_monomers)
-            #Check IO Errors
-            self.inst = MixtureSystem(['toluene','benzene','cyclohexane','ethane'],['Cc1ccccc1','c1ccccc1','C1CCCCC1','CC'],[3,5,80,7],'/', solute_index=2)
-            self.assertRaises(IOError,self.inst.build_monomers)
-    def test_convert_to_gromacs(self):
-            #Check coversion by using a wrong directory
-            self.inst = MixtureSystem(['toluene','benzene','cyclohexane','ethane'],['Cc1ccccc1','c1ccccc1','C1CCCCC1','CC'],[3,5,80,7],'/', solute_index=2)
-            self.assertRaises(IOError,self.inst.convert_to_gromacs)
-            #Check merge_topologies by using wrong filenames (solute_index=None case)
-            with utils.enter_temp_directory():
-               self.inst = MixtureSystem(['toluene','benzene','cyclohexane','ethane'],['Cc1ccccc1','c1ccccc1','C1CCCCC1','CC'],[3,5,80,7],'test/data/', solute_index=None)
-               self.inst.top_filenames = ['test/data/Error_filenames']
-               self.inst.top_filename = 'test/data/Error_filename'
-               self.assertRaises(IOError,self.inst.convert_to_gromacs)
-               #Check solute_index is in the correct range
-               self.inst = MixtureSystem(['toluene','benzene','cyclohexane','ethane'],['Cc1ccccc1','c1ccccc1','C1CCCCC1','CC'],[3,5,80,7],'test/data/', solute_index=6)
-               self.assertRaises(IOError,self.inst.convert_to_gromacs)
-               #Check merge_topologies by using wrong filenames (solute_index='auto' case)
-               self.inst = MixtureSystem(['toluene','benzene','cyclohexane','ethane'],['Cc1ccccc1','c1ccccc1','C1CCCCC1','CC'],[3,1,80,7],'test/data/', solute_index='auto')
-               self.inst.top_filenames = ['test/data/Error_filenames']
-               self.inst.top_filename = 'test/data/Error_filename'
-               self.assertRaises(IOError,self.inst.convert_to_gromacs)
-    @skipIf(not HAVE_OE, "Cannot test openeye module without OpenEye tools.")            
-    def test_build_boxes(self):
-        #Check IO Errors
-        with utils.enter_temp_directory():
-            self.inst = MixtureSystem(['toluene','benzene','cyclohexane','ethane'],['Cc1ccccc1','c1ccccc1','C1CCCCC1','CC'],[3,5,80,7],'/',solute_index=2)
-            self.assertRaises(IOError,self.inst.build_boxes)
-            self.inst = MixtureSystem(['toluene','benzene','cyclohexane','ethane'],['Cc1ccccc1','c1ccccc1','C1CCCCC1','CC'],[3,5,80,7],'test/data/',solute_index=2)
-            self.inst.inpcrd_filename = 'inpcrd_filename' 
-            self.inst.prmtop_filename = 'prmtop_filename'
-            self.assertRaises(IOError,self.inst.build_boxes)
-    #Test Run
-    @skipIf(not HAVE_OE, "Cannot test openeye module without OpenEye tools.")
+
+            #Add a component with an integer name to ensure we catch
+            self.inst = MixtureSystem()
+            self.assertRaises(ValueError, self.inst.addComponent, name=1 )
+
+            #Add a non-integer number of molecules to ensure we catch
+            self.assertRaises(ValueError, self.inst.addComponent, name='phenol', number=3.5)
+
+            #Add an invalid mole fraction
+            self.assertRaises(ValueError, self.inst.addComponent, name='phenol', mole_fraction=1.2 )            
+            self.assertRaises(ValueError, self.inst.addComponent, name='phenol', mole_fraction=-0.2 )            
+            
+            #Add mole fractions totaling greater than 1, check that we catch
+            self.inst.addComponent('phenol', mole_fraction = 0.9)
+            self.inst.addComponent('toluene', mole_fraction = 0.2)
+            self.assertRaises( ValueError, self.inst.build )
+
+
+            #Try passing invalid SMILES
+            self.assertRaises( ValueError, self.inst.addComponent, name='phenol', smiles='smiles')
+
+            #Try building with an invalid solute_index
+            self.inst = MixtureSystem()
+            self.inst.addComponent('toluene')
+            self.assertRaises( AssertionError, self.inst.build, gromacs = True,
+                 solute_index = 2)
+
+    #Test a bunch of different run cases which actually ought to work and ensure that they do
     def test_run(self):
         with utils.enter_temp_directory():
-            self.inst = MixtureSystem(['toluene','benzene','cyclohexane','ethane'],['Cc1ccccc1','c1ccccc1','C1CCCCC1','CC'],[3,5,80,7],'test/data/',solute_index=2)
-            self.inst.run( just_build = True )
-            self.inst.convert_to_gromacs()
+
+            #Set up some names, labels, components
+            names = ['toluene','benzene','cyclohexane','water', 'ethane']
+            labels = ['toluene','benzene','cyclohexane','water', 'ethane']
+            smiles = ['Cc1ccccc1','c1ccccc1','C1CCCCC1','O', 'CC'] 
+            datapath = 'test' #Use non-default
+            numbers = [3, 5, 80, 11, 7 ]
+            mole_fractions = [ 0.1, 0.1, 0.1, 0.0, 0.7 ]
+            n_components = len(names) 
+
+            #Build using name
+            self.inst = MixtureSystem( datapath )
+            for n in range(n_components):
+                self.inst.addComponent( name = names[n], mole_fraction = mole_fractions[n])
+            self.inst.build()
+
+            #Build using label
+            self.inst = MixtureSystem( 'data' )
+            for n in range(n_components):
+                self.inst.addComponent( label = labels[n], mole_fraction = mole_fractions[n])
+            self.inst.build()
+
+            #Build using label and name
+            self.inst = MixtureSystem( 'data2' )
+            for n in range(n_components):
+                self.inst.addComponent( name = names[n], label = labels[n], mole_fraction = mole_fractions[n])
+            self.inst.build()
+
+            #Build using label and smiles
+            self.inst = MixtureSystem( 'data3' )
+            for n in range(n_components):
+                self.inst.addComponent( label = labels[n], smiles = smiles[n], mole_fraction = mole_fractions[n])
+            self.inst.build()
+
+            #Build using number rather than mole fraction
+            self.inst = MixtureSystem( 'data4' )
+            for n in range(n_components):
+                self.inst.addComponent( label = labels[n], smiles = smiles[n], number = numbers[n])
+            self.inst.build()
+            
+
+            #Build using solute_index and GROMACS (implying also AMBER)
+            self.inst = MixtureSystem( 'data5' )
+            for n in range(n_components):
+                self.inst.addComponent( label = labels[n], smiles = smiles[n], number = numbers[n])
+            self.inst.build( gromacs = True, solute_index = 2)
+
+            #Build for AMBER only
+            self.inst = MixtureSystem( 'data6' )
+            for n in range(n_components):
+                self.inst.addComponent( label = labels[n], smiles = smiles[n], number = numbers[n])
+            self.inst.build( amber = True)
+
+
+            #Make sure filling compound works
+            self.inst = MixtureSystem( 'data7' )
+            for n in range(n_components)[:-1]:
+                self.inst.addComponent( label = labels[n], smiles = smiles[n], 
+                mole_fraction = mole_fractions[n])
+            self.inst.addComponent('methane')
+            self.inst.build( gromacs = True )
+
+
+            #We are already testing the infinite dilution case for one of the compounds
+
+
+
 if __name__ =='__main__':
     unittest.main()
     
