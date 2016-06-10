@@ -3,8 +3,10 @@
 # Copyright 2011-2016 UC Irvine and the Authors
 #
 # Authors: David Mobley and Gaetano Calabro
-# With thanks to Kyle Beauchamp, whose liquid_tools.py provided an initial basis for this code
-# (https://github.com/choderalab/LiquidBenchmark/blob/master/src/simulation/liquid_tools.py) in April 2015
+# With thanks to Kyle Beauchamp, whose liquid_tools.py provided an initial 
+# basis for this code
+# (https://github.com/choderalab/LiquidBenchmark/blob/master/src/simulation/liquid_tools.py)
+# in April 2015
 #
 #This library is free software; you can redistribute it and/or
 #modify it under the terms of the GNU Lesser General Public
@@ -34,17 +36,21 @@ from openeye.oeiupac import *
 from simtk.unit import * 
 
 
-# We require at least ParmEd 2.5.1 because of issues with the .mol2 writer (issue #691 on ParmEd) prior to that, and 2.5.1.10 because of OpenEye reader formatting bugs requireing compressed spacing in .mol2 files (added in ParmEd 2.5.1.10)
-# Previously 2.0.4 or later was required due to issues with FudgeLJ/FudgeQQ in resulting GROMACS topologies in
+# We require at least ParmEd 2.5.1 because of issues with the .mol2 writer 
+# (issue #691 on ParmEd) prior to that, and 2.5.1.10 because of OpenEye reader
+# formatting bugs requireing compressed spacing in .mol2 files (added in 
+# ParmEd 2.5.1.10)
+# Previously 2.0.4 or later was required due to issues with FudgeLJ/FudgeQQ in
+# resulting GROMACS topologies in
 #  earlier versions
 
 try: #Try to get version tag
     ver = parmed.version
 except: #If too old for version tag, it is too old
-    oldParmEd = Exception('ERROR: ParmEd is too old, please upgrade to 2.5.1 or later')
+    oldParmEd = Exception('ERROR: ParmEd is too old, please upgrade to 2.5.1.10 or later (parmed-dev if necessary)' )
     raise oldParmEd
 if ver < (2,5,1,10):
-    raise RuntimeError("ParmEd is too old, please upgrade to 2.5.1 or later")
+    raise RuntimeError("ParmEd is too old, please upgrade to 2.5.1.10 or later (parmed-dev if necessary)")
 
 
 def make_path(pathname):
@@ -54,30 +60,45 @@ def make_path(pathname):
         pass
 
 class MixtureSystem(object):
-    """A pipeline for simulating liquid mixtures using amber and gromacs parameter files.
+    """A MixtureSystem object for defining and preparing input files for a 
+mixture of arbitrary organic solutes. Outputs to formats for several simulation
+packages are available.
 
+    Usage
+    -----------
+
+
+    Parameters
+    -----------
+    directory : str (optional)
+        Directory tree in which to store the data. Default: "data" 
+    
 
     Limitations
     -----------
-    Existing files with the same name present in the data directory tree may be overwritten. 
-    This results in a limitation/failure in a small (and probably random) fraction of cases 
-    if multiple systems involving the same monomers are written into the same data directory. 
-    Specifically, openmoltools.amber.build_mixture_prmtop requires that each mol2 file for a 
-    component have a unique residue name, which is handled automatically by openmoltools when 
-    constructing monomers (each is assigned a unique random residue name). However, if these 
-    are overwritten with other monomers (i.e. if we set up, say, 'octanol' in the same directory twice) 
-    which by chance end up with non-unique residue names then amber.build_mixture_prmtop will 
-    fail with a ValueError. This can be avoided by ensuring that if you are constructing multiple 
-    MixtureSystems involving the same monomers, your data directories are different. 
-    This issue also will likely be fixed when openmoltools switches to topology merging 
-    via ParmEd rather than tleap, as unique residue names are built into ParmEd in a better way. 
+    Existing files with the same name present in the data directory tree may be
+    overwritten. This results in a limitation/failure in a small (and probably
+    random) fraction of cases if multiple systems involving the same monomers
+    are written into the same data directory. Specifically, 
+    openmoltools.amber.build_mixture_prmtop requires that each mol2 file for a
+    component have a unique residue name, which is handled automatically by 
+    openmoltools when constructing monomers (each is assigned a unique random
+    residue name). However, if these are overwritten with other monomers (i.e.
+    if we set up, say, 'octanol' in the same directory twice) 
+    which by chance end up with non-unique residue names then 
+    amber.build_mixture_prmtop will fail with a ValueError. This can be avoided
+    by ensuring that if you are constructing multiple MixtureSystems involving
+    the same monomers, your data directories are different. This issue also
+    will likely be fixed when openmoltools switches to topology merging 
+    via ParmEd rather than tleap, as unique residue names are built into 
+    ParmEd in a better way. 
     """
 
                 
     def __init__(self, directory='data'):
         
         """
-        Initialization of  the Molecule Database Class
+        Initialization of the Molecule Database Class
     
         Parameters
         ----------
@@ -90,45 +111,10 @@ class MixtureSystem(object):
         self.data_path = directory
         self.data_path_monomers = os.path.join(self.data_path,'monomers')
         self.data_path_packmol = os.path.join(self.data_path,'packmol_boxes')
-        self.data_path_amber = os.path.join(self.data_path,'amber')
-        self.data_path_gromacs = os.path.join(self.data_path,'gromacs')
 
         # List container of all the added components to the solution
         self.component_list = []
 
-        # List of all the smile strings
-        self.smile_strings = []
-
-        # List of all the number of monomers
-        self.n_monomers = []
-
-        # List of all the mole fractions
-        self.mole_fractions = []
-
-        # List of all the effective compound names. If the compond name is None
-        # than the compound label will be used in this list as compound name 
-        self.labels = []
-
-        # The filling compound is a compound with None molecule number and None
-        # mole fraction. It is used to fill out the solution
-        self.filling_compound = None
-
-        # Lists of filenames related to gaff mol2 files, amber files and sdf file format
-        self.gaff_mol2_filenames = []
-        self.frcmod_filenames = []
-        self.inpcrd_filenames = [] 
-        self.prmtop_filenames = []
-        self.sdf_filenames = []
-        
-        # Usefull strings used to concatenate the previous lists of filenames 
-        self.mix_fname = '' 
-        self.pdb_filename = ''
-        self.prmtop_filename = ''
-        self.inpcrd_filename = ''
-        self.top_filename = ''
-        self.gro_filename = ''
-
-        
         # Index used to perform index selection by using __iter__ function
         self.__ci = 0
 
@@ -200,7 +186,7 @@ class MixtureSystem(object):
     
     def addComponent(self, name=None, **args):
         """
-        Add a compoennt to the solution 
+        Add a component to the solution 
         
         Parameters
         ----------
@@ -213,7 +199,7 @@ class MixtureSystem(object):
         # Component object creation
         component=Component(name, **args)
 
-        # Add object to the componet list
+        # Add object to the component list
         self.component_list.append(component)
         
 
@@ -239,7 +225,56 @@ class MixtureSystem(object):
      
         """
 
+        #If no components were specified, then we can't proceed
+        if len(self.component_list)==0: 
+            raise TypeError("One or more components must be specified via addComponent")
+
+        #If we want GROMACS, we have to also build AMBER as we get GROMACS from AMBER
+        if gromacs and not amber:
+            print("Turning on build of AMBER parameter/coordinate files in order to obtain files for GROMACS via conversion.")
+            amber = True
+
+        #NOW GENERATE FINAL STORAGE FOR FILE NAMES/COMPONENT LISTS
+        #Now that we're building, we can generate the full set of components
+        #we will be using since we're done adding components
+        # List of all the smiles strings
+        self.smiles_strings = []
+
+        # List of all the number of monomers
+        self.n_monomers = []
+
+        # List of all the mole fractions
+        self.mole_fractions = []
+
+        # List of all the effective compound names. If the compond name is None
+        # than the compound label will be used in this list as compound name 
+        self.labels = []
+
+        # The filling compound is a compound with None molecule number and None
+        # mole fraction. It is used to fill out the solution
+        self.filling_compound = None
+
+        # Lists of filenames related to gaff mol2 files, amber files and sdf 
+        # file format
+        self.gaff_mol2_filenames = []
+        self.frcmod_filenames = []
+        self.inpcrd_filenames = [] 
+        self.prmtop_filenames = []
+        self.sdf_filenames = []
+
+        # Final strings for output filenames 
+        self.mix_fname = '' 
+        self.pdb_filename = ''
+        self.prmtop_filename = ''
+        self.inpcrd_filename = ''
+        self.top_filename = ''
+        self.gro_filename = ''
         
+
+        #BUILD
+    
+
+        # Now begin building by building monomers
         def build_monomers(self):
             """
             Generate GAFF mol2 and frcmod files for each chemical
@@ -263,7 +298,7 @@ class MixtureSystem(object):
                     self.mix_fname = self.mix_fname + '_' + comp.name
 
                 # Filling compound selection
-                if comp.numbers == None and comp.mole_fraction == None:
+                if comp.number == None and comp.mole_fraction == None:
                     if self.filling_compound == None:
                         self.filling_compound = comp
                         self.mole_fractions.append(comp.mole_fraction)
@@ -271,13 +306,13 @@ class MixtureSystem(object):
                         raise ValueError('Error: Two or more fillig compounds have been specified')
 
                 # Number and mol fractions lists generation
-                if comp.numbers:
-                    self.n_monomers.append(comp.numbers)
+                if comp.number:
+                    self.n_monomers.append(comp.number)
                 if comp.mole_fraction is not None:
                     self.mole_fractions.append(comp.mole_fraction)
 
                 # Lists of filenames generation    
-                self.smile_strings.append(comp.smile)
+                self.smiles_strings.append(comp.smiles)
                 self.gaff_mol2_filenames.append(mol2_filename)
                 self.frcmod_filenames.append(frcmod_filename)
                 self.inpcrd_filenames.append(inpcrd_filename)
@@ -286,7 +321,7 @@ class MixtureSystem(object):
 
                 if not (os.path.exists(mol2_filename) and os.path.exists(frcmod_filename)):
                      #Convert SMILES strings to mol2 and frcmod files for antechamber
-                     openmoltools.openeye.smiles_to_antechamber(comp.smile, mol2_filename, frcmod_filename)
+                     openmoltools.openeye.smiles_to_antechamber(comp.smiles, mol2_filename, frcmod_filename)
                      #Correct the mol2 file partial atom charges to have a total net integer molecule charge  
                      mol2f = parmed.formats.Mol2File
                      mol2f.write(parmed.load_file(mol2_filename).fix_charges(),mol2_filename, compress_whitespace=True)
@@ -310,8 +345,8 @@ class MixtureSystem(object):
 
             def mole_fractions_to_n_monomers(self, density= 1 * grams/milliliter, cutoff=12*angstrom):
                 """
-                This function is used to generate the number of molecules for each compound 
-                in the solution from the mole fractions of each molecule. 
+                This function is used to generate the number of molecules for 
+                each compound in the solution from the mole fractions of each molecule. 
                 
                 Parameters
                 ----------
@@ -350,10 +385,10 @@ class MixtureSystem(object):
                     raise ValueError('Error: The total molar fraction is greater than 1.0')               
                 
                 if sum_fractions == 1.0 and self.filling_compound:
-                     raise ValueError('Error: The total molar fraction is 1.0 and it is not possible to add any filling compound to the solution') 
+                     raise ValueError('Error: The total molar fraction is 1.0 and it is not possible to add any filling compound to the solution, but a filling compound was specified') 
                 
                 if sum_fractions < 1.0 and not self.filling_compound:
-                    raise ValueError('Error: The total molar fraction is less than 1.0 and the filling compoind is missing')
+                    raise ValueError('Error: The total molar fraction is less than 1.0 and no filling compound (i.e. compound with unspecified mole fraction) is provided')
 
                 if self.filling_compound:
                     self.filling_compound.mole_fraction = 1.0 - sum_fractions
@@ -370,7 +405,7 @@ class MixtureSystem(object):
                     mol = oechem.OEMol()
                     
                     if not OEReadMolecule(istream, mol):
-                        raise IOError('Error: It was not possible to create the OpenEye molecule object reading the file: %s' % self.gaff_mol2_filenames[i])
+                        raise IOError('Error: It was not possible to create the OpenEye molecule object by reading the file: %s' % self.gaff_mol2_filenames[i])
                     # Molecular weight
                     wgt = oechem.OECalculateMolecularWeight(mol) * grams/mole
                     
@@ -402,6 +437,7 @@ class MixtureSystem(object):
                 raise ValueError('The list of gaff mol2 molecules is empty')
 
             if self.n_monomers and self.mole_fractions:
+                    print (self.n_monomers, self.mole_fractions)
                     raise ValueError('Error: For different compounds it is not possible to mix mole_fractions and number of molecules')
 
 
@@ -411,7 +447,7 @@ class MixtureSystem(object):
                 if self.filling_compound:
                     raise ValueError('Error: The filling compound cannot be mixed with components specified by defining the number of molecules')
  
-                size = openmoltools.packmol.approximate_volume_by_density(self.smile_strings, self.n_monomers)
+                size = openmoltools.packmol.approximate_volume_by_density(self.smiles_strings, self.n_monomers)
                 packed_trj = openmoltools.packmol.pack_box([md.load(mol2) for mol2 in self.gaff_mol2_filenames], self.n_monomers, box_size = size)
                 
                 self.labels = self.mix_fname[1:].split('_')
@@ -425,14 +461,15 @@ class MixtureSystem(object):
 
                 n_monomers, size = mole_fractions_to_n_monomers(self)
                 
-                # WARNING: The size estimated with the mole_to_n_monomers function is underestimating
-                # the volume calculated by using openmoltools and for now we are using this estimate. 
-                # Apparently Packmol is struggling to find convergence and introduces extra molecules
+                # WARNING: The size estimated with the mole_to_n_monomers
+                # function is underestimating the volume calculated by using
+                # openmoltools and for now we are using this estimate. 
+                # If the volume is underestimated, apparently Packmol struggles
+                # to find convergence and introduces extra molecules
                 # into the found best solutionx (bug?)
 
-                size = openmoltools.packmol.approximate_volume_by_density(self.smile_strings, self.n_monomers)
+                size = openmoltools.packmol.approximate_volume_by_density(self.smiles_strings, self.n_monomers)
                 packed_trj = openmoltools.packmol.pack_box([md.load(mol2) for mol2 in self.gaff_mol2_filenames], n_monomers, box_size = size)
-                #packed_trj = openmoltools.packmol.pack_box([md.load(mol2) for mol2 in self.gaff_mol2_filenames], n_monomers, box_size = size/anstrom)
                 
                 self.labels = self.mix_fname[1:].split('_')
                 self.mix_fname = self.mix_fname[1:] +''.join(['_'+str(i) for i in self.mole_fractions if i is not None])
@@ -444,11 +481,24 @@ class MixtureSystem(object):
 
 
         def convert_to_gromacs(self, solute_index):
-            """From AMBER-format prmtop and crd files, generate final solvated GROMACS topology and coordinate files. Ensure that the desired "solute" (as per solute_index) has a single monomer treated via a unique residue name to allow treatment as a solute separate from other residues of the same name (if desired). The solute will be given residue name "solute" Also, check to see if there are "WAT" residues present, in which case tleap will have re-ordered them to the end of the data file. If so, update data structures accordingly and handle conversion appropriately. 
+            """From AMBER-format prmtop and crd files, generate final solvated
+GROMACS topology and coordinate files. Ensure that the desired "solute" (as per
+solute_index) has a single monomer treated via a unique residue name to allow
+treatment as a solute separate from other residues of the same name (if 
+desired). The solute will be given residue name "solute" Also, check to see if
+there are "WAT" residues present, in which case tleap will have re-ordered
+them to the end of the data file. If so, update data structures accordingly
+and handle conversion appropriately. 
 
-            Notes
-            -----
-            Currently, this function ensures that - after AMBER conversion reorders water molecules with residue names 'WAT' to occur last in the resulting parameter/coordinate files - the internal data structures are updated to have the correct order in the relevant lists (labels, smiles_strings, n_monomers). If for some reason GROMACS conversion were removed, these would need to be updated elsewhere. (Probably this should be done anyway, as this is not really a GROMACS issue.)
+    Notes
+    -----
+    Currently, this function ensures that - after AMBER conversion reorders 
+    water molecules with residue names 'WAT' to occur last in the resulting
+    parameter/coordinate files - the internal data structures are updated to 
+    have the correct order in the relevant lists (labels, smiles_strings,
+    n_monomers). If for some reason GROMACS conversion were removed, these 
+    would need to be updated elsewhere. (Probably this should be done anyway,
+    as this is not really a GROMACS issue.)
 
             """
             # Read in AMBER format parameter/coordinate file and convert in gromacs
@@ -467,16 +517,23 @@ class MixtureSystem(object):
             
             # Manage presence of WAT residues and possible re-ordering
             if 'WAT' in resnames:
-                # If there is a water present, then we MIGHT have re-ordering. Check smiles to find out where it was originally.
-                wat_orig_index = self.smile_strings.index('O')
+
+                # If there is a water present, then we MIGHT have re-ordering. 
+                # Check smiles to find out where it was originally.
+                wat_orig_index = self.smiles_strings.index('O')
+
                 # Where is it now?
                 wat_new_index = resnames.index('WAT')
-                # Reordered? If so, we have to adjust the ordering of n_monomers, smiles_strings, labels,
-                # and potentially solute_index. Filenames will be preserved since these were already created
+
+                # Reordered? If so, we have to adjust the ordering of 
+                # n_monomers, smiles_strings, labels, and potentially 
+                # solute_index. Filenames will be preserved since these were 
+                #already created
                 if wat_orig_index != wat_new_index:
-                    # tleap moves water to the end so if they aren't equal, we know where water will be...
+                    # tleap moves water to the end so if they aren't equal, we
+                    # know where water will be...
                     self.n_monomers = self.n_monomers[0:wat_orig_index] + self.n_monomers[wat_orig_index+1:] + [self.n_monomers[wat_orig_index]] 
-                    self.smile_strings = self.smile_strings[0:wat_orig_index] + self.smile_strings[wat_orig_index+1:] + [self.smile_strings[wat_orig_index]] 
+                    self.smiles_strings = self.smiles_strings[0:wat_orig_index] + self.smiles_strings[wat_orig_index+1:] + [self.smiles_strings[wat_orig_index]] 
                     self.labels = self.labels[0:wat_orig_index] + self.labels[wat_orig_index+1:] + [self.labels[wat_orig_index] ]
                     # Check solute_index and alter if needed
                 if not solute_index=='auto' and not solute_index==None:
@@ -503,7 +560,7 @@ class MixtureSystem(object):
             
             # Check that the passed solute index is correct
             check_solute_indices = range(0,len(self.n_monomers))
-            assert solute_index in check_solute_indices and isinstance(solute_index, int) or solute_index == None, "Solute index must be an element of the list: %s or None. The value passed is: %s" % (check_solute_indices,self.solute_index)
+            assert solute_index in check_solute_indices and isinstance(solute_index, int) or solute_index == None, "Solute index must be an element of the list: %s or None. The value passed is: %s" % (check_solute_indices, solute_index)
             
             # Now all we have to do is to change the name of the solute molecule (residue, in ParmEd) and ParmEd will automatically make it a new molecule on write.
             # To do this, first build a list of the residue names we want, by molecule
@@ -542,6 +599,7 @@ class MixtureSystem(object):
         
         # Create amber files
         if amber:
+            self.data_path_amber = os.path.join(self.data_path,'amber')
             make_path(os.path.join(self.data_path_amber))
             self.prmtop_filename = os.path.join(self.data_path_amber, self.mix_fname+'.prmtop')
             self.inpcrd_filename = os.path.join(self.data_path_amber, self.mix_fname+'.inpcrd')
@@ -549,6 +607,7 @@ class MixtureSystem(object):
 
             # Create gromacs files
             if gromacs:
+                self.data_path_gromacs = os.path.join(self.data_path,'gromacs')
                 make_path(os.path.join(self.data_path_gromacs))
                 self.top_filename = os.path.join(self.data_path_gromacs, self.mix_fname+'.top')
                 self.gro_filename = os.path.join(self.data_path_gromacs, self.mix_fname+'.gro')
@@ -562,12 +621,12 @@ class MixtureSystem(object):
 
 class Component(object):
     """
-    This Class is used to save the componet parameters
+    This Class is used to save the component parameters
 
     """
 
     
-    def __init__(self, name=None, label=None, smile=None, numbers=None, mole_fraction=None):
+    def __init__(self, name=None, label=None, smiles=None, number=None, mole_fraction=None):
         """
         Initialization class function 
         
@@ -577,21 +636,24 @@ class Component(object):
            the molecule name
         label : str
            the molecule label used to generates files
-        smile : str
-           the molecule smile string
-        numbers : int
+        smiles : str
+           the molecule SMILES string
+        number : int
            the number of molecule 
         mole_fraction : float
            molecular mole fraction
+
+        REQUIRED: A name and/or label. If no SMILES is provided, the name will be used to generate SMILES and if no name is provided, the label will be used to attempt to generate SMILES. 
         """
 
 
-        # Checking  name and label
+        # Checking name and label
 
         ref_str = ''
         
         if not name and not label:
-            raise ValueError("Error: No component parameters name or label has been provided for the component")
+            raise ValueError("Error: No component parameters name or label"+
+" have been provided for the component")
 
         if label:
             if not isinstance(label, str):
@@ -604,20 +666,25 @@ class Component(object):
             ref_str = name    
           
         if label and not name:
-            print('\nWARNING: component name not provided label will be used as component name\n')
+            print('\nWARNING: component name not provided; label will be used as component name\n')
 
-        # Checking smile, molecule numbers and mole fraction    
+        # Checking smiles, molecule number and mole fraction    
             
-        if smile:
-            if not isinstance(smile, str):
-                raise ValueError("Error: The smile % for the component %s is not a string" % (smile, ref_str))
-                #TO DO: Check if a string is a valid smile string
+        if smiles:
+            if not isinstance(smiles, str):
+                raise ValueError("Error: The SMILES % for the component %s is not a string" % (smiles, ref_str))
+            #Check this is a valid SMILES string
+            mol = OEMol()
+            status = OEParseSmiles(mol, smiles)
+            if not status:
+                raise ValueError("Error: The SMILES %s for the component %s"
+                 " cannot be processed by OEChem." % (smiles, ref_str) )
 
-        if numbers is not None:
-            if not isinstance(numbers, int):
-                raise ValueError("Error: The molecule numbers %s for the component %s is not an integer" % (numbers, ref_str))
-            if numbers < 1:
-                raise ValueError("Error: The molecule numbers %s for the component %s must be a positive integer" % (numbers, ref_str))
+        if number is not None:
+            if not isinstance(number, int):
+                raise ValueError("Error: The molecule quantity %s for the component %s is not an integer" % (number, ref_str))
+            if number < 1:
+                raise ValueError("Error: The molecule quantity %s for the component %s must be a positive integer" % (number, ref_str))
             
         if mole_fraction:
             if not isinstance(mole_fraction, float):
@@ -627,28 +694,33 @@ class Component(object):
             if mole_fraction > 1.0:
                 raise ValueError("Error: The mole fraction %s for the component %s is greater than one" % (mole_fraction, ref_str))
         
-        if numbers and mole_fraction:
-            raise ValueError("Error: molecule numbers and mole fraction for the compound %s cannot be both specified" % ref_str)
+        if number and mole_fraction:
+            raise ValueError("Error: molecule number and mole fraction for the compound %s cannot be both specified" % ref_str)
                     
-        if not smile:
+        if not smiles:
             mol = OEMol()
             if name:
                 try:
                     OEParseIUPACName(mol, name)
-                    smile = OECreateIsoSmiString(mol)
+                    smiles = OECreateIsoSmiString(mol)
+                    #If smiles is empty, didn't parse correctly
+                    if smiles == '':
+                        raise ValueError("Error: The supplied name '%s' could not be parsed" % name)
                 except:
                     raise ValueError("Error: The supplied name '%s' could not be parsed" % name)
             elif label:
                 try:
                     OEParseIUPACName(mol, label)
-                    smile = OECreateIsoSmiString(mol)
+                    smiles = OECreateIsoSmiString(mol)
+                    if smiles == '':
+                        raise ValueError("Error: The supplied name '%s' could not be parsed" % name)
                 except:
                     raise ValueError("Error: The supplied label '%s' could not be parsed" % label)
 
         self.name = name
         self.label = label
-        self.smile = smile
-        self.numbers = numbers
+        self.smiles = smiles
+        self.number = number
         self.mole_fraction = mole_fraction
         
             
@@ -660,8 +732,8 @@ class Component(object):
         Printing object function
         """
         
-        return "\nname = %s\nlabel =  %s\nsmile = %s\nnumbers = %s\nmole_frac = %s\n" \
-        %(self.name, self.label, self.smile, self.numbers, self.mole_fraction)
+        return "\nname = %s\nlabel =  %s\nsmiles = %s\nnumber = %s\nmole_frac = %s\n" \
+        %(self.name, self.label, self.smiles, self.number, self.mole_fraction)
 
 
     
