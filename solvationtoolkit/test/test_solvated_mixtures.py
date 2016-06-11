@@ -19,30 +19,23 @@ try:
 except:
     HAVE_OE = False
 
-#Now that OpenEye is working on Travis via encrypted license file, require OpenEye for testing
-if not HAVE_OE:
-    raise(ImportError("SolvationToolkit requires OpenEye's Python toolkits and a valid license."))
-
 
 class TestMixtureSystem(unittest.TestCase):
-
+    @skipIf(not HAVE_OE, "Cannot test core functionality without OpenEye tools.")
     def setUp(self):
         with utils.enter_temp_directory(): 
             self.inst = MixtureSystem()
-            self.inst.addComponent(name='toluene', smiles='Cc1ccccc1', number=3 )
-            self.inst.addComponent(name='benzene', smiles ='c1ccccc1', number=5 )
-            self.inst.addComponent(name='cyclohexane', smiles='C1CCCCC1', number=80 )
-            self.inst.addComponent(name='ethane', smiles='CC', number=7 )
 
     #Test class Initialization
+    #These should be able to run without OpenEye tools
     def test_InsufficientInit(self):
         with utils.enter_temp_directory():
             #Check wrong number of arguments for adding a component - it requires a name or label at least.
             self.assertRaises(ValueError, self.inst.addComponent, smiles="CC")
 
             #Check what happens if we don't actually add components
-            self.inst = MixtureSystem()
             self.assertRaises(TypeError, self.inst.build )
+            
         
     def test_TypeArgs(self):
         #Check passed input Types
@@ -64,17 +57,21 @@ class TestMixtureSystem(unittest.TestCase):
             self.inst.addComponent('toluene', mole_fraction = 0.2)
             self.assertRaises( ValueError, self.inst.build )
 
-
+    @skipIf(not HAVE_OE, "Cannot check smiles or name handling without OpenEye tools.")
+    def test_ChemParsing(self):
+        with utils.enter_temp_directory():
+            self.inst = MixtureSystem()
             #Try passing invalid SMILES
             self.assertRaises( ValueError, self.inst.addComponent, name='phenol', smiles='smiles')
-
             #Try building with an invalid solute_index
             self.inst = MixtureSystem()
             self.inst.addComponent('toluene')
             self.assertRaises( AssertionError, self.inst.build, gromacs = True,
-                 solute_index = 2)
+
+    
 
     #Test a bunch of different run cases which actually ought to work and ensure that they do
+    @skipIf(not HAVE_OE, "Cannot test core functionality without OpenEye tools.")
     def test_run(self):
         with utils.enter_temp_directory():
 
@@ -141,7 +138,6 @@ class TestMixtureSystem(unittest.TestCase):
 
 
             #We are already testing the infinite dilution case for one of the compounds
-
 
 
 if __name__ =='__main__':
