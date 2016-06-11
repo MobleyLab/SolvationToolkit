@@ -1,3 +1,7 @@
+os: 
+    - linux
+    #- osx
+
 language: c
 sudo: false
 addons:
@@ -56,12 +60,12 @@ env:
     - PACKAGENAME="solvationtoolkit"
     # Location of decrypted OpenEye license file
     - OE_LICENSE="$HOME/oe_license.txt"
-    # encrypted BINSTAR_TOKEN for push of dev package to binstar
-    - secure: "S9I5imZ0CJdwfhHzy+Beh8NTFm2ZYpMFCLgvBYT/UsifIKlGynUK2xGi7bDnHLpslT45FUMmjzdpf2QNrfbivVJgiSDTQJc1GCIqGFFKFqerJEEYUkXlBxvWNO+poSOMIzkJqd7xsTodt4CYhGJM1dT6ocaSM7UJgAErrcRJfLo="
+    # encrypted ANACONDA_TOKEN for push of dev package to Anaconda
+    - secure: "QflOtg3nSmlKJlXCR+CEYnHSRfLemF7vTDjWK0H3dPe8mu+9eEbIiJyIupZI+Zg0fgcgqnqb9k9IZNKCi5K7gKmNemnNuKEDxxzxAkTf3abaoTJ2YaUx2yFO1SKrkfeqaH8x4jxehnM/H7QDaC7cjcQEVqgc2uKNWzchEcz5/ywqhj7HOxwhEo9cT93f713jZwlK3BZzo8E7HVPh9Docs920FxgIXQ5e6d6wAg8f84zb9DLK3WcVJfj8PFuIjPJqFcEw1tCTpcVmWlu6Rf01mcPuygHMzk5GzxSkIhOIz+IXbg2XuxntH4G2geGVwDyw4sX+5NDjIktuDo9j+G1WTvkbWl4TiJNeA2CGuga/247k6qYCSEQCI6lHs6zNaM1gaD1CNtrY2f9ciwinZP748Dsrq5uqdyCNlZusdk9bpw2vx//46AS+cugMz8wYd2S/LBxSjpgD7e01DvZtfaWWc6AphvUWM+SXyzIOP6pXHxfkBNj4y0Kbo1n2uO1TrFHl/6FSJ6uUeSWcyXZRZHbAJNo35juU55gOTOoIOzOOwUWk/gKz4S4hAm5PVLcQ9vHsinACCHPTTNCOar5qNLzacfCnTowxyNJ31McayMZfrougqsFbhVAwGXIJaxFPqrTSPPhx+kEtJGxM2pyYATp/eXwLm/RNG1zHZsuoXfBGVZ8=" 
 
 after_success:
   - echo "after_success"
-  #- source devtools/travis-ci/after_success.sh
+  - source devtools/travis-ci/after_success.sh
 
 notifications:
   email: false
