@@ -67,7 +67,7 @@ class TestMixtureSystem(unittest.TestCase):
             self.inst = MixtureSystem()
             self.inst.addComponent('toluene')
             self.assertRaises( AssertionError, self.inst.build, gromacs = True,
-
+                solute_index = 2)
     
 
     #Test a bunch of different run cases which actually ought to work and ensure that they do
