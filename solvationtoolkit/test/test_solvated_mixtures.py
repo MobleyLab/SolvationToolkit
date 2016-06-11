@@ -1,6 +1,5 @@
 import os.path, sys
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
-from solvationtoolkit.solvated_mixtures import MixtureSystem
 from openmoltools import utils
 import unittest
 from unittest import skipIf
@@ -23,11 +22,13 @@ except:
 class TestMixtureSystem(unittest.TestCase):
     @skipIf(not HAVE_OE, "Cannot test core functionality without OpenEye tools.")
     def setUp(self):
+        from solvationtoolkit.solvated_mixtures import MixtureSystem
         with utils.enter_temp_directory(): 
             self.inst = MixtureSystem()
 
     #Test class Initialization
-    #These should be able to run without OpenEye tools
+    #These should be able to run without OpenEye tools at least with suitable re-architecting
+    @skipIf(not HAVE_OE, "Cannot test core functionality without OpenEye tools.")
     def test_InsufficientInit(self):
         with utils.enter_temp_directory():
             #Check wrong number of arguments for adding a component - it requires a name or label at least.
@@ -36,7 +37,9 @@ class TestMixtureSystem(unittest.TestCase):
             #Check what happens if we don't actually add components
             self.assertRaises(TypeError, self.inst.build )
             
-        
+
+    #Should be able to run without OE tools with suitable re-architecting    
+    @skipIf(not HAVE_OE, "Cannot test core functionality without OpenEye tools.")
     def test_TypeArgs(self):
         #Check passed input Types
         with utils.enter_temp_directory():
