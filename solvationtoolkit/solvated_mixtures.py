@@ -422,6 +422,8 @@ packages are available.
                    the edge of the box volume 
 
                 """
+                oechem = import_("openeye.oechem")
+
                 # Calculate the maximum atomic distance in a molecule 
                 def max_dist_mol(mol):
                     max_dist = 0.0
@@ -459,10 +461,10 @@ packages are available.
 
          
                 for i in range(0, len(self.sdf_filenames)):
-                    istream = oemolistream(self.sdf_filenames[i])#gaff_mol2_files give wrong wgt because not sybyl format!
+                    istream = oechem.oemolistream(self.sdf_filenames[i])#gaff_mol2_files give wrong wgt because not sybyl format!
                     mol = oechem.OEMol()
                     
-                    if not OEReadMolecule(istream, mol):
+                    if not oechem.OEReadMolecule(istream, mol):
                         raise IOError('Error: It was not possible to create the OpenEye molecule object by reading the file: %s' % self.gaff_mol2_filenames[i])
                     # Molecular weight
                     wgt = oechem.OECalculateMolecularWeight(mol) * grams/mole
