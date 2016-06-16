@@ -91,7 +91,7 @@ def createTag(tag_names, mol, charges, atom_types):
             #Tag Name Error
             raise Exception('Wrong tag name')
             break
-        OESetSDData(mol, OESDDataPair(tag, value))
+        oechem.OESetSDData(mol, OESDDataPair(tag, value))
     return mol
 
 
