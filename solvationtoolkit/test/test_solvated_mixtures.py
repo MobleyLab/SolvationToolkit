@@ -3,6 +3,7 @@ sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.par
 from openmoltools import utils
 import unittest
 from unittest import skipIf
+from solvationtoolkit.solvated_mixtures import MixtureSystem
 
 
 try:
@@ -22,7 +23,6 @@ except:
 class TestMixtureSystem(unittest.TestCase):
     @skipIf(not HAVE_OE, "Cannot test core functionality without OpenEye tools.")
     def setUp(self):
-        from solvationtoolkit.solvated_mixtures import MixtureSystem
         with utils.enter_temp_directory(): 
             self.inst = MixtureSystem()
 
