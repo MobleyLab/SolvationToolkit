@@ -49,7 +49,7 @@ def writeSDF(mol2_filename, sdf_filename, mol_name):
     
     ifs = oechem.oemolistream(mol2_filename)
     MOL2flavor = oechem.OEIFlavor_Generic_Default | oechem.OEIFlavor_MOL2_Default | oechem.OEIFlavor_MOL2_Forcefield
-    ifs.SetFlavor(OEFormat_MOL2, MOL2flavor)
+    ifs.SetFlavor(oechem.OEFormat_MOL2, MOL2flavor)
 
     ofs = oechem.oemolostream(sdf_filename)
     tag_names = ['partial_charges', 'partial_bond_orders', 'atom_types']
