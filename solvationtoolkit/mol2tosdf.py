@@ -23,9 +23,7 @@
 
 
 import sys
-from openeye.oechem import *
-import openeye.oequacpac as oequacpac
-
+from openmoltools.utils import import_
 
 def writeSDF(mol2_filename, sdf_filename, mol_name):
     """For generating .sdf file format from .mol2 file, using OEIFlavor (OpenEye). Creates three tags (partial_charges, partial_bond_orders, and atom_types) in the .sdf file using values from the reference (.mol2 file).
@@ -47,18 +45,19 @@ def writeSDF(mol2_filename, sdf_filename, mol_name):
     -----------
     Creates only three tags in .sdf file. The tags are partial_charges, partial_bond_orders, and atom_types (GAFF). Their values are set according to the correspondent .mol2 file properties.
     """
+    oechem = import_("openeye.oechem")
     
-    ifs = oemolistream(mol2_filename)
-    MOL2flavor = OEIFlavor_Generic_Default | OEIFlavor_MOL2_Default | OEIFlavor_MOL2_Forcefield
-    ifs.SetFlavor(OEFormat_MOL2, MOL2flavor)
+    ifs = oechem.oemolistream(mol2_filename)
+    MOL2flavor = oechem.OEIFlavor_Generic_Default | oechem.OEIFlavor_MOL2_Default | oechem.OEIFlavor_MOL2_Forcefield
+    ifs.SetFlavor(oechem.OEFormat_MOL2, MOL2flavor)
 
-    ofs = oemolostream(sdf_filename)
+    ofs = oechem.oemolostream(sdf_filename)
     tag_names = ['partial_charges', 'partial_bond_orders', 'atom_types']
     
     # Set the title and assign partial charges for the .mol2 file
     for mol in ifs.GetOEGraphMols():
         mol.SetTitle(mol_name)
-        molToCharge = OEMol(mol)
+        molToCharge = oechem.OEMol(mol)
         
         # Get partial charges and atom types from .mol2 file and store them to put into the .sdf file as tags
         charges = []
@@ -72,14 +71,15 @@ def writeSDF(mol2_filename, sdf_filename, mol_name):
         #print("atom types: " + str(atom_types))
         # Create the tags for the sdf file
         mol = createTag(tag_names, mol, charges, atom_types)
-        OEWriteMolecule(ofs, mol)
+        oechem.OEWriteMolecule(ofs, mol)
     ifs.close()
     ofs.close()
 
 
 def createTag(tag_names, mol, charges, atom_types):
     """Create the tags for sdf file."""
-    mol_id = OEGetSDData(mol, 'Mol_Index')
+    oechem = import_("openeye.oechem")
+    mol_id = oechem.OEGetSDData(mol, 'Mol_Index')
     for tag in tag_names:
         if tag == 'partial_charges':
             value = manipulatePartialChargesTag(charges)
@@ -91,7 +91,7 @@ def createTag(tag_names, mol, charges, atom_types):
             #Tag Name Error
             raise Exception('Wrong tag name')
             break
-        OESetSDData(mol, OESDDataPair(tag, value))
+        oechem.OESetSDData(mol, oechem.OESDDataPair(tag, value))
     return mol
 
 

@@ -90,9 +90,8 @@ import mdtraj as md
 import parmed
 import openmoltools
 import solvationtoolkit.mol2tosdf as mol2tosdf
-from openeye.oechem import *
-from openeye.oeiupac import *
 from simtk.unit import * 
+from openmoltools.utils import import_
 
 
 # We require at least ParmEd 2.5.1 because of issues with the .mol2 writer 
@@ -423,6 +422,8 @@ packages are available.
                    the edge of the box volume 
 
                 """
+                oechem = import_("openeye.oechem")
+
                 # Calculate the maximum atomic distance in a molecule 
                 def max_dist_mol(mol):
                     max_dist = 0.0
@@ -460,10 +461,10 @@ packages are available.
 
          
                 for i in range(0, len(self.sdf_filenames)):
-                    istream = oemolistream(self.sdf_filenames[i])#gaff_mol2_files give wrong wgt because not sybyl format!
+                    istream = oechem.oemolistream(self.sdf_filenames[i])#gaff_mol2_files give wrong wgt because not sybyl format!
                     mol = oechem.OEMol()
                     
-                    if not OEReadMolecule(istream, mol):
+                    if not oechem.OEReadMolecule(istream, mol):
                         raise IOError('Error: It was not possible to create the OpenEye molecule object by reading the file: %s' % self.gaff_mol2_filenames[i])
                     # Molecular weight
                     wgt = oechem.OECalculateMolecularWeight(mol) * grams/mole
@@ -706,6 +707,9 @@ class Component(object):
         """
 
 
+        oechem = import_("openeye.oechem")
+        oeiupac = import_("openeye.oeiupac")
+
         # Checking name and label
 
         ref_str = ''
@@ -733,8 +737,8 @@ class Component(object):
             if not isinstance(smiles, str):
                 raise ValueError("Error: The SMILES % for the component %s is not a string" % (smiles, ref_str))
             #Check this is a valid SMILES string
-            mol = OEMol()
-            status = OEParseSmiles(mol, smiles)
+            mol = oechem.OEMol()
+            status = oechem.OEParseSmiles(mol, smiles)
             if not status:
                 raise ValueError("Error: The SMILES %s for the component %s"
                  " cannot be processed by OEChem." % (smiles, ref_str) )
@@ -757,11 +761,11 @@ class Component(object):
             raise ValueError("Error: molecule number and mole fraction for the compound %s cannot be both specified" % ref_str)
                     
         if not smiles:
-            mol = OEMol()
+            mol = oechem.OEMol()
             if name:
                 try:
-                    OEParseIUPACName(mol, name)
-                    smiles = OECreateIsoSmiString(mol)
+                    oeiupac.OEParseIUPACName(mol, name)
+                    smiles = oechem.OECreateIsoSmiString(mol)
                     #If smiles is empty, didn't parse correctly
                     if smiles == '':
                         raise ValueError("Error: The supplied name '%s' could not be parsed" % name)
@@ -769,8 +773,8 @@ class Component(object):
                     raise ValueError("Error: The supplied name '%s' could not be parsed" % name)
             elif label:
                 try:
-                    OEParseIUPACName(mol, label)
-                    smiles = OECreateIsoSmiString(mol)
+                    oeiupac.OEParseIUPACName(mol, label)
+                    smiles = oechem.OECreateIsoSmiString(mol)
                     if smiles == '':
                         raise ValueError("Error: The supplied name '%s' could not be parsed" % name)
                 except:
