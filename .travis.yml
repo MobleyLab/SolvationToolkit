@@ -35,8 +35,9 @@ script:
   - conda config --add channels ${ORGNAME}
   # Build conda dev package
   - conda build devtools/conda-recipe
-  # Activate test environment
-  - source activate _test
+  # Create and activate test environment
+  - conda create --yes -n test python=$python
+  - source activate test
   # Install package prerequisites
   - conda install --yes --quiet pip nose nose-timer
   - conda install --yes --quiet packmol
@@ -49,13 +50,9 @@ script:
 env:
   matrix:
     # OpenEye production
-    - CONDA_PY=27  OPENEYE_CHANNEL="-i https://pypi.anaconda.org/openeye/channel/main/simple"
-    - CONDA_PY=34  OPENEYE_CHANNEL="-i https://pypi.anaconda.org/openeye/channel/main/simple"
-    - CONDA_PY=35  OPENEYE_CHANNEL="-i https://pypi.anaconda.org/openeye/channel/main/simple"
-    # OpenEye beta
-    #- CONDA_PY=27  OPENEYE_CHANNEL="--pre -i https://pypi.anaconda.org/openeye/channel/beta/simple"
-    #- CONDA_PY=34  OPENEYE_CHANNEL="--pre -i https://pypi.anaconda.org/openeye/channel/beta/simple"
-    #- CONDA_PY=35  OPENEYE_CHANNEL="--pre -i https://pypi.anaconda.org/openeye/channel/beta/simple"
+    - python=2.7  CONDA_PY=27  OPENEYE_CHANNEL="-i https://pypi.anaconda.org/openeye/channel/main/simple"
+    - python=3.4  CONDA_PY=34  OPENEYE_CHANNEL="-i https://pypi.anaconda.org/openeye/channel/main/simple"
+    - python=3.5  CONDA_PY=35  OPENEYE_CHANNEL="-i https://pypi.anaconda.org/openeye/channel/main/simple"
 
   global:
     - ORGNAME="omnia"
