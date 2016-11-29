@@ -1,59 +1,46 @@
-os: 
-    - linux
-    #- osx
-
 language: c
 sudo: false
-addons:
-  apt:
-    sources:
-    - ubuntu-toolchain-r-test
-    packages:
-      - g++
-      - gfortran
-      - valgrind
-      - csh
-      - g++-multilib
-      - gcc-multilib
 
 branches:
   only:
     - master
 
-before_install:
+install:
   # Configure environment.
   - source devtools/travis-ci/install.sh
   - export PYTHONUNBUFFERED=true
   - echo $TRAVIS_SECURE_ENV_VARS
   # Unpack encrypted OpenEye license file
-  - openssl aes-256-cbc -K $encrypted_29b74a78b682_key -iv $encrypted_29b74a78b682_iv -in oe_license.txt.enc -out $HOME/oe_license.txt -d
-
-install:
+  - openssl aes-256-cbc -K $encrypted_0a6c0c3ae19c_key -iv $encrypted_0a6c0c3ae19c_iv -in oe_license.txt.enc -out oe_license.txt -d
 
 script:
   # Add omnia channel
   - conda config --add channels ${ORGNAME}
   # Build conda dev package
   - conda build devtools/conda-recipe
-  # Activate test environment
-  - source activate _test
+  # Create and activate test environment
+  - conda create --yes -n test python=$python
+  - source activate test
   # Install package prerequisites
   - conda install --yes --quiet pip nose nose-timer
   - conda install --yes --quiet packmol
-  - pip install $OPENEYE_CHANNEL openeye-toolkits
+  #- pip install $OPENEYE_CHANNEL openeye-toolkits
+  #Use beta version instead
+  - pip install --pre -i https://pypi.anaconda.org/openeye/label/beta/simple openeye-toolkits && python -c "import openeye; print(openeye.__version__)"
+  # Build the recipe
+  - conda build devtools/conda-recipe
+  # Install
+  - conda install --yes --use-local solvationtoolkit
   # Test the package
+  - conda install --yes nose nose-timer
   - cd devtools && nosetests $PACKAGENAME --nocapture --verbosity=2 --with-doctest --with-timer -a '!slow' && cd ..
 
 env:
   matrix:
     # OpenEye production
-    - CONDA_PY=27  OPENEYE_CHANNEL="-i https://pypi.anaconda.org/openeye/channel/main/simple"
-    - CONDA_PY=34  OPENEYE_CHANNEL="-i https://pypi.anaconda.org/openeye/channel/main/simple"
-    - CONDA_PY=35  OPENEYE_CHANNEL="-i https://pypi.anaconda.org/openeye/channel/main/simple"
-    # OpenEye beta
-    #- CONDA_PY=27  OPENEYE_CHANNEL="--pre -i https://pypi.anaconda.org/openeye/channel/beta/simple"
-    #- CONDA_PY=34  OPENEYE_CHANNEL="--pre -i https://pypi.anaconda.org/openeye/channel/beta/simple"
-    #- CONDA_PY=35  OPENEYE_CHANNEL="--pre -i https://pypi.anaconda.org/openeye/channel/beta/simple"
+    - python=2.7  CONDA_PY=27  OPENEYE_CHANNEL="-i https://pypi.anaconda.org/openeye/channel/main/simple"
+    - python=3.4  CONDA_PY=34  OPENEYE_CHANNEL="-i https://pypi.anaconda.org/openeye/channel/main/simple"
+    - python=3.5  CONDA_PY=35  OPENEYE_CHANNEL="-i https://pypi.anaconda.org/openeye/channel/main/simple"
 
   global:
     - ORGNAME="omnia"
@@ -63,9 +50,7 @@ env:
     # encrypted ANACONDA_TOKEN for push of dev package to Anaconda
     - secure: "QflOtg3nSmlKJlXCR+CEYnHSRfLemF7vTDjWK0H3dPe8mu+9eEbIiJyIupZI+Zg0fgcgqnqb9k9IZNKCi5K7gKmNemnNuKEDxxzxAkTf3abaoTJ2YaUx2yFO1SKrkfeqaH8x4jxehnM/H7QDaC7cjcQEVqgc2uKNWzchEcz5/ywqhj7HOxwhEo9cT93f713jZwlK3BZzo8E7HVPh9Docs920FxgIXQ5e6d6wAg8f84zb9DLK3WcVJfj8PFuIjPJqFcEw1tCTpcVmWlu6Rf01mcPuygHMzk5GzxSkIhOIz+IXbg2XuxntH4G2geGVwDyw4sX+5NDjIktuDo9j+G1WTvkbWl4TiJNeA2CGuga/247k6qYCSEQCI6lHs6zNaM1gaD1CNtrY2f9ciwinZP748Dsrq5uqdyCNlZusdk9bpw2vx//46AS+cugMz8wYd2S/LBxSjpgD7e01DvZtfaWWc6AphvUWM+SXyzIOP6pXHxfkBNj4y0Kbo1n2uO1TrFHl/6FSJ6uUeSWcyXZRZHbAJNo35juU55gOTOoIOzOOwUWk/gKz4S4hAm5PVLcQ9vHsinACCHPTTNCOar5qNLzacfCnTowxyNJ31McayMZfrougqsFbhVAwGXIJaxFPqrTSPPhx+kEtJGxM2pyYATp/eXwLm/RNG1zHZsuoXfBGVZ8=" 
 
-after_success:
-  - echo "after_success"
-  - source devtools/travis-ci/after_success.sh
+#after_success:
+#  - echo "after_success"
+#  - source devtools/travis-ci/after_success.sh
 
-notifications:
-  email: false

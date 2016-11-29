@@ -21,7 +21,7 @@ if sys.version_info[:2] < (2, 7):
 
 
 ##########################
-VERSION = "0.4.1"
+VERSION = "0.4.2"
 ISRELEASED = True
 __version__ = VERSION
 ##########################
@@ -34,19 +34,19 @@ SolvationToolkit is a simple toolkit for setting up input files for simulations 
 data = {'solvationtoolkit':['test/*.py'] }
 
 setup(
-    name                 = 'solvationtoolkit', 
-    version              = __version__, 
+    name                 = 'solvationtoolkit',
+    version              = __version__,
     description          = 'Solvation Toolkit',
     long_description     = descr,
     url                  = 'https://github.com/mobleylab/solvationtoolkit',
     author               = 'Gaetano Calabro and David Mobley',
     author_email         = 'gcalabro -at- uci.edu',
-    license              = 'LGPL',
+    license              = 'MIT',
     platforms            = ['Linux-64', 'Mac OSX-64', 'Unix-64'],
-    packages             = find_packages(),  
+    packages             = find_packages(),
     package_data         = data,
     include_package_data = True,
-      
+
     #entry_points         = {'console_scripts':['start=scripts/start.py']},
     zip_safe             = False
 
