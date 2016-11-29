@@ -44,7 +44,12 @@ script:
   #- pip install $OPENEYE_CHANNEL openeye-toolkits
   #Use beta version instead
   - pip install --pre -i https://pypi.anaconda.org/openeye/label/beta/simple openeye-toolkits && python -c "import openeye; print(openeye.__version__)"
+  # Build the recipe
+  - conda build devtools/conda-recipe
+  # Install
+  - conda install --yes --use-local solvationtoolkit
   # Test the package
+  - conda install --yes nose nose-timer
   - cd devtools && nosetests $PACKAGENAME --nocapture --verbosity=2 --with-doctest --with-timer -a '!slow' && cd ..
 
 env:
