@@ -7,6 +7,8 @@ Tools for setting up arbitrary (currently non-water) solute-solvent mixtures for
 
 This provides the MixtureSystem class (in `solvationtoolkit.solvated_mixtures`) for definition and construction of mixtures as discussed below. Usage examples are below, as well as in `scripts/start.py`.
 
+Latest release: [![DOI](https://zenodo.org/badge/35064710.svg)](https://zenodo.org/badge/latestdoi/35064710)
+
 # Installing
 
 ## Prerequisites
@@ -100,6 +102,9 @@ generated.
 
 ## Issues/problems/bug reports
 * See issue tracker
+
+## Versions:
+- [Version 0.4.2](https://doi.org/10.5281/zenodo.180626): Institutes Zenodo version tracking/unique DOIs for each version.
 
 ## Disclaimers
 * This code is currently in approximately beta release status. Use at your own risk. We will almost certainly be making changes to the API in the near future. (A very substantial API change was made in v0.4.0) 
