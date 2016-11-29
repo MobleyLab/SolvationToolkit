@@ -41,7 +41,7 @@ setup(
     url                  = 'https://github.com/mobleylab/solvationtoolkit',
     author               = 'Gaetano Calabro and David Mobley',
     author_email         = 'gcalabro -at- uci.edu',
-    license              = 'LGPL',
+    license              = 'MIT',
     platforms            = ['Linux-64', 'Mac OSX-64', 'Unix-64'],
     packages             = find_packages(),
     package_data         = data,
