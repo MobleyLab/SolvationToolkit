@@ -17,7 +17,7 @@ requirements:
     - numpydoc
     - scipy
     - ambermini
-    - parmed-dev
+    - parmed
     - openmoltools
     - mdtraj
     - packmol
@@ -32,7 +32,7 @@ requirements:
     - numpydoc
     - scipy
     - ambermini
-    - parmed-dev
+    - parmed
     - libgfortran ==1.0 # [linux]
     - openmoltools
     - mdtraj 
