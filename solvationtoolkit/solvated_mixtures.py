@@ -92,6 +92,7 @@ import openmoltools
 import solvationtoolkit.mol2tosdf as mol2tosdf
 from simtk.unit import *
 from openmoltools.utils import import_
+import shutil
 
 
 # We require at least ParmEd 2.5.1 because of issues with the .mol2 writer
@@ -673,7 +674,11 @@ and handle conversion appropriately.
             make_path(os.path.join(self.data_path_amber))
             self.prmtop_filename = os.path.join(self.data_path_amber, self.mix_fname+'.prmtop')
             self.inpcrd_filename = os.path.join(self.data_path_amber, self.mix_fname+'.inpcrd')
-            tleap_cmd = openmoltools.amber.build_mixture_prmtop(self.gaff_mol2_filenames, self.frcmod_filenames, self.pdb_filename, self.prmtop_filename, self.inpcrd_filename)
+            # Make AMBER PDB file (will have water residue names/atom names modified if applicable)
+            self.pdb_filename_amber = os.path.join(self.data_path_packmol, self.mix_fname+'amber.pdb')
+            shutil.copy(self.pdb_filename, self.pdb_filename_amber)
+
+            tleap_cmd = openmoltools.amber.build_mixture_prmtop(self.gaff_mol2_filenames, self.frcmod_filenames, self.pdb_filename_amber, self.prmtop_filename, self.inpcrd_filename)
 
             # Create gromacs files
             if gromacs:
