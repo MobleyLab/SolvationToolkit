@@ -33,7 +33,7 @@ requirements:
     - scipy
     - ambermini
     - parmed
-    - libgfortran ==1.0 # [linux]
+    #- libgfortran ==1.0 # [linux]
     - openmoltools
     - mdtraj 
     - packmol
