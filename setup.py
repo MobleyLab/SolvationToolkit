@@ -21,7 +21,7 @@ if sys.version_info[:2] < (2, 7):
 
 
 ##########################
-VERSION = "0.4.3.dev0"
+VERSION = "0.4.3"
 ISRELEASED = False
 __version__ = VERSION
 ##########################
