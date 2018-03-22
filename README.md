@@ -1,4 +1,4 @@
-##Build Status
+## Build Status
 
 [![Build Status](https://travis-ci.org/MobleyLab/SolvationToolkit.svg?branch=master)](https://travis-ci.org/MobleyLab/SolvationToolkit)
 
@@ -105,6 +105,7 @@ generated.
 
 ## Versions:
 - [Version 0.4.2](https://doi.org/10.5281/zenodo.180626): Institutes Zenodo version tracking/unique DOIs for each version.
+- [Version 0.4.3](https://dx.doi.org/10.5281/zenodo.1205593): Functionally the same as 0.4.2 but removes dependence on libgfortran.
 
 ## Disclaimers
 * This code is currently in approximately beta release status. Use at your own risk. We will almost certainly be making changes to the API in the near future. (A very substantial API change was made in v0.4.0) 
