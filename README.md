@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/MobleyLab/SolvationToolkit.svg?branch=master)](https://travis-ci.org/MobleyLab/SolvationToolkit)
 
 # SolvationToolkit
-Tools for setting up arbitrary (currently non-water) solute-solvent mixtures for simulation in GROMACS or AMBER formats, or for use in OpenMM. 
+Tools for setting up arbitrary (currently non-water) solute-solvent mixtures for simulation in GROMACS or AMBER formats, or for use in OpenMM.
 
 This provides the MixtureSystem class (in `solvationtoolkit.solvated_mixtures`) for definition and construction of mixtures as discussed below. Usage examples are below, as well as in `scripts/start.py`.
 
@@ -61,6 +61,11 @@ ternary_mixture.addComponent(name='water')
 infinite_dilution = MixtureSystem()
 infinite_dilution.addComponent(name='phenol', mole_fraction=0.0)
 infinite_dilution.addComponent(name='water')
+
+
+# Setup a molecule of taurine; use protonation states appropriate for neutral pH
+taurine = MixtureSystem(protonation=True)
+taurine.addComponent(name='taurine', smiles='C(CS(=O)(=O)O)N', number=1)
 ```
 
 ## Other usage information
@@ -98,6 +103,12 @@ Within that, subdirectories contain .sdf and .mol2 files for monomers,
 the generated .pdb format boxes from packmol, and AMBER and GROMACS files if
 generated.
 
+## Protonation states
+
+This retains the legacy behavior where molecules are by default set up in their "standard" protonation state as obtained from the SMILES (typically their neutral form). An option argument, `protonation`, to the `MixtureSystem` constructor, will use `OENeutralpHModel` to attempt to set up typical neutral pH appropriate protonation states as per OpenEye's model, if set to True. Alternatively, providing SMILES strings with formal charges specified should result in the desired protonation states, though this has not been tested.
+
+Depending on the application, different protonation states may be desired, so you may need to devote some care to this aspect.
+
 # Other Stuff
 
 ## Issues/problems/bug reports
@@ -107,5 +118,8 @@ generated.
 - [Version 0.4.2](https://doi.org/10.5281/zenodo.180626): Institutes Zenodo version tracking/unique DOIs for each version.
 - [Version 0.4.3](https://dx.doi.org/10.5281/zenodo.1205593): Functionally the same as 0.4.2 but removes dependence on libgfortran.
 
+## Changes not yet in a release:
+- Addition of optional argument to allow use of a pH model for selection of protonation states.
+
 ## Disclaimers
-* This code is currently in approximately beta release status. Use at your own risk. We will almost certainly be making changes to the API in the near future. (A very substantial API change was made in v0.4.0) 
+* This code is currently in approximately beta release status. Use at your own risk. We will almost certainly be making changes to the API in the near future. (A very substantial API change was made in v0.4.0)
