@@ -131,6 +131,11 @@ packages are available.
     -----------
     directory : str (optional)
         Directory tree in which to store the data. Default: "data"
+    protonation : bool
+       Use a protonation model to determine protonation states of compounds? Default: None.
+       If True, uses OpenEye's neutral pH model to predict likely protonation statesself.
+       WARNING: Currently charged systems are not neutralized by addition of counterions,
+       thus use of this may result in systems with a formal charge.
 
 
     Limitations
@@ -154,7 +159,7 @@ packages are available.
     """
 
 
-    def __init__(self, directory='data'):
+    def __init__(self, directory='data', protonation=None):
 
         """
         Initialization of the Molecule Database Class
@@ -163,6 +168,11 @@ packages are available.
         ----------
         directory : str
            the directory name used to save the data
+        protonation : bool
+           Use a protonation model to determine protonation states of compounds? Default: None.
+           If True, uses OpenEye's neutral pH model to predict likely protonation statesself.
+           WARNING: Currently charged systems are not neutralized by addition of counterions,
+           thus use of this may result in systems with a formal charge.
 
         """
 
@@ -170,6 +180,7 @@ packages are available.
         self.data_path = directory
         self.data_path_monomers = os.path.join(self.data_path,'monomers')
         self.data_path_packmol = os.path.join(self.data_path,'packmol_boxes')
+        self.protonation_model = protonation
 
         # List container of all the added components to the solution
         self.component_list = []
@@ -380,7 +391,7 @@ packages are available.
 
                 if not (os.path.exists(mol2_filename) and os.path.exists(frcmod_filename)):
                      #Convert SMILES strings to mol2 and frcmod files for antechamber
-                     openmoltools.openeye.smiles_to_antechamber(comp.smiles, mol2_filename, frcmod_filename)
+                     openmoltools.openeye.smiles_to_antechamber(comp.smiles, mol2_filename, frcmod_filename, protonation = self.protonation_model)
                      #Correct the mol2 file partial atom charges to have a total net integer molecule charge
                      mol2f = parmed.formats.Mol2File
                      mol2f.write(parmed.load_file(mol2_filename).fix_charges(),mol2_filename, compress_whitespace=True)
@@ -812,6 +823,3 @@ class Component(object):
 
         return "\nname = %s\nlabel =  %s\nsmiles = %s\nnumber = %s\nmole_frac = %s\n" \
         %(self.name, self.label, self.smiles, self.number, self.mole_fraction)
-
-
-
